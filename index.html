@@ -124,6 +124,29 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 .log{max-height:320px;overflow:auto;display:grid;gap:8px;font-size:15px}
 .log div{padding:10px 14px;border-radius:18px;max-width:88%}
 .log .you{justify-self:end;background:var(--butter-s)}.log .th{background:var(--sage)}.log .ig{justify-self:end;color:var(--mut);font-style:italic;font-size:13px}
+
+/* voice orb */
+.orbwrap{position:fixed;inset:0;z-index:40;display:grid;grid-template-rows:auto 1fr auto;padding:14px 18px calc(22px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 38%,var(--sage) 0%,var(--bg) 68%);animation:fadein .25s}
+@keyframes fadein{from{opacity:0}}
+.orbtop{display:flex;justify-content:space-between;align-items:center;max-width:520px;width:100%;margin:0 auto}
+.orbmid{display:grid;justify-items:center;align-content:center;gap:10px;text-align:center;max-width:520px;width:100%;margin:0 auto}
+.orbmid h2{font-size:28px;font-weight:900}.orbmid p{min-height:3.2em;color:var(--mut);font-size:18px;font-weight:600;max-width:34ch}
+.orbstage{position:relative;width:min(64vw,260px);aspect-ratio:1;margin:0 0 26px}
+.orb{position:absolute;inset:0;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;
+  background:radial-gradient(circle at 34% 28%,#fffbe0,var(--butter) 42%,#e2bd45 100%);box-shadow:0 0 70px rgba(246,220,120,.65),inset 0 -10px 30px rgba(200,150,20,.25)}
+.orb svg{width:46%;height:46%}
+.halo{position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(246,220,120,.45),transparent 68%);animation:breathe 3.2s ease-in-out infinite}
+.ring{position:absolute;inset:0;border-radius:50%;border:2.5px solid var(--sage2);opacity:0;pointer-events:none}
+[data-state=listening] .ring{animation:ripple 2.6s ease-out infinite}[data-state=listening] .r2{animation-delay:1.3s}
+[data-state=speaking] .ring{border-color:var(--butter);animation:ripple 1.5s ease-out infinite}[data-state=speaking] .r2{animation-delay:.75s}
+[data-state=speaking] .orb{animation:talk .9s ease-in-out infinite}
+[data-state=thinking] .orb{animation:breathe 1.2s ease-in-out infinite}
+[data-state=off] .halo{animation:none;opacity:.4}
+@keyframes ripple{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.3);opacity:0}}
+@keyframes breathe{50%{transform:scale(1.07)}}
+@keyframes talk{0%,100%{transform:scale(1)}30%{transform:scale(1.07)}60%{transform:scale(.97)}}
+.orbchips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:520px;margin:0 auto}.orbchips button{background:var(--card);box-shadow:var(--sh)}
+@media(prefers-reduced-motion:reduce){.orbwrap,.halo,.ring,.orb{animation:none!important}}
 </style>
 </head>
 <body>
@@ -173,7 +196,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
   <div class="card" style="margin-top:16px">
     <div class="micRow">
       <button class="mic" id="micBtn" aria-label="Turn listening on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-      <div><b id="micState" style="font-size:18px">Listening is off</b><div class="muted" id="micHint">Tap the mic, then say "Okay Thyme, let's begin."</div></div>
+      <div><b id="micState" style="font-size:18px">Listening is off</b><div class="muted" id="micHint">Tap the mic, then say "Okay Thyme, let's begin."</div><button class="x hide" id="micOff" style="padding:4px 0;min-height:36px">Turn off listening</button></div>
     </div>
     <p class="muted" id="partial" style="min-height:1.4em;margin-top:8px"></p>
     <form id="cmdForm"><input id="cmd" placeholder='Type "next", "repeat" or a question' autocomplete="off"><button class="pri">Send</button></form>
@@ -194,6 +217,15 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 </nav>
 </div>
 <div id="toast" role="status"></div>
+<div class="orbwrap hide" id="orb" data-state="off" role="dialog" aria-label="Thyme voice assistant">
+  <div class="orbtop"><button class="icon" id="orbMin" aria-label="Minimize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button><button class="x" id="orbStop">Stop listening</button></div>
+  <div class="orbmid">
+    <div class="orbstage"><span class="halo"></span><i class="ring r1"></i><i class="ring r2"></i>
+      <button class="orb" id="orbBtn" aria-label="Thyme"><svg viewBox="0 0 80 80"><path d="M40 70 C39 52 41 38 44 12" fill="none" stroke="#1d3527" stroke-width="3.5" stroke-linecap="round"/><g fill="#1d3527" opacity=".9"><ellipse rx="10" ry="5" transform="translate(30 56) rotate(-35)"/><ellipse rx="10" ry="5" transform="translate(50 50) rotate(35)"/><ellipse rx="9" ry="4.5" transform="translate(31 40) rotate(-40)"/><ellipse rx="9" ry="4.5" transform="translate(50 33) rotate(40)"/><ellipse rx="8" ry="4" transform="translate(36 25) rotate(-45)"/><ellipse rx="8" ry="4" transform="translate(52 18) rotate(45)"/></g></svg></button></div>
+    <h2 id="orbStatus">Listening…</h2><p id="orbText" aria-live="polite"></p>
+  </div>
+  <div class="orbchips" id="orbChips"></div>
+</div>
 
 <dialog class="sheet" id="addSheet"><div class="grab"></div>
   <h2>Add a dish</h2>
@@ -486,47 +518,67 @@ function speechify(t){return String(t).replace(/(\d+)\s*°\s*F/g,'$1 degrees').r
   .replace(/\b1\/2\b/g,'half').replace(/\b1\/4\b/g,'a quarter').replace(/\b3\/4\b/g,'three quarters').replace(/(\d+)h\s*(\d+)m\b/g,'$1 hours $2 minutes').replace(/\b(\d+)h\b/g,'$1 hours').replace(/\b1 hours\b/g,'1 hour')
   .replace(/(\d+)\s*min\b/g,'$1 minutes').replace(/\b(\d+)m\b/g,'$1 minutes').replace(/\b1 minutes\b/g,'1 minute').replace(/:\s/g,'. ')}
 function speak(text,delay=0){
-  if(!('speechSynthesis' in window))return;
+  if(!('speechSynthesis' in window)){resumeMic();return}
   const parts=(speechify(text).match(/[^.!?]+[.!?]*/g)||[text]).map(x=>x.trim()).filter(Boolean);
   const chunks=[];parts.forEach(x=>{const l=chunks[chunks.length-1];if(l&&l.length+x.length<90)chunks[chunks.length-1]=l+' '+x;else chunks.push(x)});
-  setTimeout(()=>{if(run&&run.muted)return;const v=curVoice();
-    chunks.forEach(c=>{const u=new SpeechSynthesisUtterance(c);if(v){u.voice=v;u.lang=v.lang}u.rate=voicePref.rate;u.pitch=1.04;
-      u.onstart=()=>{speaking=true};u.onend=u.onerror=()=>{speaking=false;lastSpokeEnd=Date.now()};speechSynthesis.speak(u)})},delay)}
+  pending+=chunks.length;updateOrb();
+  setTimeout(()=>{if(run&&run.muted){pending=Math.max(0,pending-chunks.length);resumeMic();updateOrb();return}const v=curVoice();
+    chunks.forEach(c=>{const u=new SpeechSynthesisUtterance(c);if(v){u.voice=v;u.lang=v.lang}u.rate=voicePref.rate;u.pitch=1.04;let done=false;
+      u.onstart=()=>{speaking=true};
+      u.onend=u.onerror=()=>{if(done)return;done=true;pending=Math.max(0,pending-1);speaking=pending>0;lastSpokeEnd=Date.now();if(pending===0){resumeMic();updateOrb()}};
+      speechSynthesis.speak(u)})},delay)}
 function notifyBg(text){
   if(!document.hidden||!('Notification' in window)||Notification.permission!=='granted'||!navigator.serviceWorker)return;
   navigator.serviceWorker.ready.then(r=>r.showNotification('Thyme',{body:text,icon:'icons/icon-192.png',badge:'icons/icon-192.png',tag:'thyme-step',renotify:true,vibrate:[200,100,200],actions:[{action:'next',title:'Done, next step'},{action:'repeat',title:'Repeat'}]})).catch(()=>{})}
 function say(text,{beep=false,instr=false}={}){
   addLog('th',text);if(instr&&run)run.last=text;lastSpoken=text.toLowerCase();
   if(beep){chime();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
-  notifyBg(text);
-  if(run&&run.muted)return;
+  notifyBg(text);lastSaid=text;pauseMic();
+  if(run&&run.muted){resumeMic(beep?1700:450);return}
   speak(text,beep?1100:0);
 }
 function addLog(cls,text){const el=document.createElement('div');el.className=cls;el.textContent=text;const L=$('#log');L.appendChild(el);while(L.children.length>60)L.firstChild.remove();L.scrollTop=L.scrollHeight}
 
-/* ---------- speech in ---------- */
-let wantListen=false,rec=null;
+/* ---------- speech in: half-duplex, so Thyme never hears itself ---------- */
+let wantListen=false,rec=null,micPaused=false,pending=0,resumeT=null,thinking=false,lastSaid='';
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function micUI(on,hint){$('#micBtn').classList.toggle('on',on);$('#micBtn').setAttribute('aria-label',on?'Turn listening off':'Turn listening on');
-  $('#micState').textContent=on?'Listening':'Listening is off';if(hint)$('#micHint').textContent=hint}
-function wireDictation(d){
-  d.onPartial(({text})=>{$('#partial').textContent=text});
-  d.onFinal(({text})=>{$('#partial').textContent='';heard(text,false)});
-  d.onState(({state:s,reason})=>{const on=s==='listening';micUI(on,on?'Say "Okay Thyme, let\'s begin" or a command.':(wantListen&&reason!=='stopped'&&reason!=='viewer_stopped'?'Listening paused. Tap the mic to resume.':'Tap the mic to talk to Thyme.'));if(!on&&(reason==='stopped'||reason==='viewer_stopped'))wantListen=false});
-}
-$('#micBtn').addEventListener('click',()=>{
-  unlockAudio();
-  if(wantListen){wantListen=false;if(dict)dict.stop().catch(()=>{});if(rec)try{rec.stop()}catch(e){};micUI(false,'Tap the mic to talk to Thyme.');return}
-  wantListen=true;
-  if(dict){dict.start().catch(e=>{wantListen=false;micUI(false,e&&e.code==='not_granted'?'Microphone was declined. You can still tap the buttons or type.':'Could not start listening. Tap to try again.')});return}
+const setPartial=t=>{$('#partial').textContent=t;if(orbState()==='listening')$('#orbText').textContent=t?'“'+t+'”':''};
+function micUI(on,hint){$('#micBtn').classList.toggle('on',on);$('#micBtn').setAttribute('aria-label',on?'Open voice assistant':'Turn listening on');
+  $('#micState').textContent=on?'Listening':'Listening is off';if(hint)$('#micHint').textContent=hint;$('#micOff').classList.toggle('hide',!on);updateOrb()}
+function orbState(){if(!wantListen)return 'off';if(pending>0)return 'speaking';if(thinking)return 'thinking';return 'listening'}
+function updateOrb(){const st=orbState(),o=$('#orb');o.dataset.state=st;
+  $('#orbStatus').textContent={off:'Listening is off',listening:'Listening…',speaking:'Thyme is talking',thinking:'Thinking…'}[st];
+  if(st==='speaking')$('#orbText').textContent=lastSaid;else if(st==='thinking')$('#orbText').textContent='';
+  else if(st==='listening'&&!$('#orbText').textContent)$('#orbText').textContent=run?'Try “next”, “repeat”, or ask about your recipe.':'Say “Okay Thyme, let’s begin.”';
+  const chips=run?[['Done, next step',()=>next()],['Repeat',()=>repeat()],['What’s next',()=>whatsNext()],['Timers',()=>timers()]]:[['Let’s begin',()=>begin()]];
+  const box=$('#orbChips');if(box.dataset.k!==String(!!run)){box.dataset.k=String(!!run);box.innerHTML='';chips.forEach(([l,f])=>{const b=document.createElement('button');b.textContent=l;b.addEventListener('click',()=>{unlockAudio();f()});box.appendChild(b)})}}
+function openOrb(){$('#orb').classList.remove('hide');document.body.style.overflow='hidden';updateOrb()}
+function closeOrb(){$('#orb').classList.add('hide');document.body.style.overflow=''}
+function pauseMic(){if(!wantListen||micPaused)return;micPaused=true;clearTimeout(resumeT);setPartial('');
+  if(rec)try{rec.stop()}catch(e){}if(dict)dict.stop().catch(()=>{});updateOrb()}
+function resumeMic(ms=450){clearTimeout(resumeT);resumeT=setTimeout(()=>{if(!wantListen||pending>0)return;micPaused=false;
+  if(dict)dict.start().catch(()=>{});else if(SR)startSR();$('#orbText').textContent='';updateOrb()},ms)}
+function interrupt(){try{speechSynthesis.cancel()}catch(e){}pending=0;speaking=false;lastSpokeEnd=Date.now();resumeMic(150);updateOrb()}
+function startMic(){wantListen=true;micPaused=false;
+  if(dict){dict.start().catch(e=>{wantListen=false;micUI(false,e&&e.code==='not_granted'?'Microphone was declined. You can still tap the buttons or type.':'Could not start listening. Tap to try again.')});micUI(true,'Say "Okay Thyme, let\'s begin" or a command.');return}
   if(SR){startSR();return}
-  wantListen=false;micUI(false,'Voice input is not supported in this browser. Use Chrome or Edge, or type below.');
-});
-function startSR(){try{rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang='en-US';
-  rec.onresult=e=>{let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript}$('#partial').textContent=part;if(fin)heard(fin,false)};
-  rec.onend=()=>{if(wantListen)try{rec.start()}catch(e){}else micUI(false)};
-  rec.onerror=e=>{if(e.error==='not-allowed'){wantListen=false;micUI(false,'Microphone blocked. Use the buttons or type.')}};
-  rec.start();micUI(true,'Say "Okay Thyme, let\'s begin" or a command.')}catch(e){wantListen=false;micUI(false,'Could not start listening.')}}
+  wantListen=false;micUI(false,'Voice input is not supported in this browser. Use Chrome or Edge, or type below.');closeOrb()}
+function stopMic(){wantListen=false;micPaused=false;clearTimeout(resumeT);if(dict)dict.stop().catch(()=>{});if(rec){const r=rec;rec=null;try{r.stop()}catch(e){}}setPartial('');micUI(false,'Tap the mic to talk to Thyme.');closeOrb()}
+function wireDictation(d){
+  d.onPartial(({text})=>{if(!micPaused)setPartial(text)});
+  d.onFinal(({text})=>{setPartial('');if(!micPaused)heard(text,false)});
+}
+$('#micBtn').addEventListener('click',()=>{unlockAudio();if(!wantListen)startMic();if(wantListen)openOrb()});
+$('#micOff').addEventListener('click',stopMic);
+$('#orbStop').addEventListener('click',stopMic);
+$('#orbMin').addEventListener('click',closeOrb);
+$('#orbBtn').addEventListener('click',()=>{unlockAudio();if(orbState()==='speaking')interrupt()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#orb').classList.contains('hide'))closeOrb()});
+function startSR(){try{const r=new SR();rec=r;r.continuous=true;r.interimResults=true;r.lang='en-US';
+  r.onresult=e=>{if(micPaused||rec!==r)return;let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript;else part+=x[0].transcript}setPartial(part);if(fin){setPartial('');heard(fin,false)}};
+  r.onend=()=>{if(rec===r&&wantListen&&!micPaused)try{r.start()}catch(e){}};
+  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){wantListen=false;micUI(false,'Microphone blocked. Use the buttons or type.');closeOrb()}};
+  r.start();micUI(true,'Say "Okay Thyme, let\'s begin" or a command.')}catch(e){wantListen=false;micUI(false,'Could not start listening.');closeOrb()}}
 function unlockAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume()}catch(e){}if('speechSynthesis' in window&&!speaking){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}}
 
 $('#cmdForm').addEventListener('submit',e=>{e.preventDefault();unlockAudio();const v=$('#cmd').value.trim();if(!v)return;$('#cmd').value='';heard(v,true)});
@@ -638,14 +690,16 @@ function whatsNext(){if(!run){say('We haven\'t started. Say "Okay Thyme, let\'s 
 function timers(){const r=S().filter(t=>t.state==='running');if(!r.length){say('No timers running.');return}
   say(r.map(t=>{const m=Math.round((t.dueAt-Date.now())/60000);return `${t.dish.name}, ${m>0?m+' minutes left':'time is up'}`}).join('. ')+'.')}
 function pause(on){if(!run)return;on=!!on;if(on===!!run.muted)return;run.muted=on;
-  if(on){try{speechSynthesis.cancel()}catch(e){}addLog('th','Voice muted. Your timers are still running.');toast('Voice muted. Timers keep running.')}
+  if(on){interrupt();addLog('th','Voice muted. Your timers are still running.');toast('Voice muted. Timers keep running.')}
   else say('Voice is back on.');
   if(silentEl)silentEl.play().catch(()=>{});updateSession(true);renderCook()}
 
 /* ---------- questions: answered only from the recipes on hand ---------- */
 function recipeText(){return state.dishes.map(d=>`## ${d.name} (${d.servings} servings)\nIngredients: ${(d.ing||[]).join('; ')||'not listed'}\n`+d.steps.map((s,i)=>`${i+1}. ${s.text} [${s.min} min, ${s.kind==='active'?'hands-on':'hands-off'}${s.equip!=='none'?', '+s.equip:''}]`).join('\n')).join('\n\n')}
 async function ask(q){
-  const c=chefStep();
+  const c=chefStep();thinking=true;pauseMic();updateOrb();
+  try{await ask2(q,c)}finally{thinking=false;updateOrb()}}
+async function ask2(q,c){
   if(sample){try{const r=await sample(`You are Thyme, a voice kitchen assistant. Answer the cook's question using ONLY the recipes below. Do not use outside cooking knowledge. If the recipes don't answer it, say: "That isn't in your recipe, so I won't guess." and, if useful, name the closest step. Reply in at most two short spoken sentences, no markdown.\n\nRECIPES:\n${recipeText()}\n\n${c?`CURRENT STEP: ${c.dish.name}: ${c.s.text}\n\n`:''}QUESTION: ${q}`,{modelTier:'quick',cache:false});
       say(String(r.text||'').trim()||'Sorry, I did not get an answer.');return}catch(e){}}
   // offline fallback: find the step or ingredient that best matches the question's words
