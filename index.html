@@ -126,6 +126,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 .log .you{justify-self:end;background:var(--butter-s)}.log .th{background:var(--sage)}.log .ig{justify-self:end;color:var(--mut);font-style:italic;font-size:13px}
 
 .shop{display:flex;gap:12px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--line);font-size:16px;color:var(--ink);font-weight:600}.shop input{width:24px;height:24px;min-height:0;flex:none;margin-top:2px;accent-color:#6fae63}.shop input:checked+span{opacity:.45;text-decoration:line-through}
+.libitem{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.libitem>div:nth-child(2){flex:1}.libitem b{display:block;line-height:1.2}.libact{display:flex;flex-direction:column;gap:6px;align-items:stretch}.libact button{min-height:38px;padding:4px 14px;font-size:14px}.libact .x{padding:2px 8px}
 /* voice orb */
 .orbwrap{position:fixed;inset:0;z-index:40;display:grid;grid-template-rows:auto 1fr auto;padding:14px 18px calc(22px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 38%,var(--sage) 0%,var(--bg) 68%);animation:fadein .25s}
 @keyframes fadein{from{opacity:0}}
@@ -173,7 +174,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
     <div class="st" id="heroStats"></div>
   </button>
   <div class="stitle" style="margin-top:26px"><h2>Tonight's menu</h2><p id="menuCount"></p></div>
-  <div class="row hide" id="shopRow" style="margin:-4px 0 6px"><button class="sage" id="shopBtn" data-open="shopSheet">Shopping list</button></div>
+  <div class="row" style="margin:-4px 0 6px"><button class="sage" data-open="libSheet" id="libBtn">My recipes</button><button class="sage hide" id="shopBtn" data-open="shopSheet">Shopping list</button></div>
   <div id="empty" class="empty card"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="#f6dc78"/><path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1d3527" stroke-width="3" stroke-linecap="round"/><g fill="#8fc487" stroke="#1d3527" stroke-width="2"><ellipse rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/><ellipse rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/><ellipse rx="6.5" ry="3.5" transform="translate(44 22) rotate(-80)"/></g></svg>
     <h3>What are we cooking?</h3><p>Add your dishes and Thyme will plan the whole evening backward from dinner time.</p>
     <button class="pri big" data-open="addSheet">Add a dish</button><button class="x" id="sampleBtn" style="margin-top:6px">Try a sample dinner</button></div>
@@ -231,7 +232,8 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 
 <dialog class="sheet" id="addSheet"><div class="grab"></div>
   <h2>Add a dish</h2>
-  <p class="muted" style="margin-bottom:8px">Tap a favourite</p><div class="chips" id="quick"></div>
+  <div id="mineBox" class="hide"><p class="muted" style="margin-bottom:8px">Your saved recipes</p><div class="chips" id="mine"></div><div style="height:12px"></div></div>
+  <p class="muted" style="margin-bottom:8px">Starter recipes</p><div class="chips" id="quick"></div>
   <div class="grid" style="margin-top:16px"><label class="wide">Or type a dish name<input id="dname" placeholder="e.g. Garlic roast chicken" autocomplete="off"></label>
     <label>Servings<input id="dserv" type="number" min="1" value="8" inputmode="numeric"></label></div>
   <div class="row"><button class="pri big" id="lookup">Find the recipe</button></div>
@@ -254,6 +256,16 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
   </div>
   <p class="muted" style="margin-top:12px">Extra time stretches every hands-on step for slow chopping or a phone call. Finishing early leaves a spare block before serving.</p>
   <div class="row" style="margin-top:14px"><button class="pri big" data-close>Done</button></div>
+</dialog>
+
+<dialog class="sheet" id="libSheet"><div class="grab"></div>
+  <h2>My recipes</h2><p class="muted" style="margin-bottom:10px">Recipes you look up, paste or edit are saved here automatically. Edits you make on the Menu update the saved copy.</p>
+  <input id="libQ" type="search" placeholder="Search by name or ingredient" aria-label="Search recipes">
+  <div id="libList" style="margin-top:10px"></div>
+  <p class="muted hide" id="libWarn" style="margin-top:10px;color:var(--over)">This browser is not letting Thyme save. Export a backup so nothing is lost.</p>
+  <div class="row" style="margin-top:14px"><button class="sage" id="libExport">Export backup</button><button class="sage" id="libImportBtn">Import</button><input type="file" id="libImport" accept="application/json,.json" class="hide"></div>
+  <p class="muted" style="margin-top:8px">Recipes live on this device only. Export a backup now and then, or to move them to a new phone.</p>
+  <div class="row" style="margin-top:10px"><button class="big" data-close>Close</button></div>
 </dialog>
 
 <dialog class="sheet" id="shopSheet"><div class="grab"></div>
@@ -434,7 +446,19 @@ const defServe=()=>{const d=new Date();d.setHours(19,0,0,0);if(d<new Date())d.se
 function toLocalInput(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
 let state;try{state=JSON.parse(localStorage.getItem('thyme.v1'))}catch(e){}
 if(!state||!state.cfg)state={dishes:[],cfg:{serve:defServe(),burners:4,ovens:1,buffer:15,tail:10}};
-const save=()=>{try{localStorage.setItem('thyme.v1',JSON.stringify(state))}catch(e){}};
+/* ---------- recipe library: every recipe you look up, paste or edit is kept on this device ---------- */
+const LIBKEY='thyme.library';let lib=[],libOK=true;
+try{lib=JSON.parse(localStorage.getItem(LIBKEY)||'[]');if(!Array.isArray(lib))lib=[]}catch(e){lib=[]}
+const newLibId=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function saveLib(){try{localStorage.setItem(LIBKEY,JSON.stringify(lib));libOK=true}catch(e){libOK=false}updateLibUI()}
+const recOf=d=>({name:d.name,servings:d.servings,ing:(d.ing||[]).slice(),notes:(d.notes||[]).slice(),steps:d.steps.map(({text,min,kind,equip})=>({text,min,kind,equip}))});
+const recKey=r=>JSON.stringify([r.name,r.servings,r.ing,r.notes,r.steps]);
+function syncLib(){let ch=false;state.dishes.forEach(d=>{if(d.noLib||!d.steps.length)return;if(!d.libId)d.libId=newLibId();
+  const rec=recOf(d),o=lib.find(x=>x.libId===d.libId);
+  if(!o){lib.push({libId:d.libId,...rec,savedAt:Date.now(),updatedAt:Date.now(),usedAt:Date.now()});ch=true}
+  else if(recKey(o)!==recKey(rec)){Object.assign(o,rec,{updatedAt:Date.now()});ch=true}});
+  if(ch)saveLib()}
+const save=()=>{try{localStorage.setItem('thyme.v1',JSON.stringify(state))}catch(e){}try{syncLib()}catch(e){}};
 const color=d=>COLORS[state.dishes.indexOf(d)%COLORS.length];
 
 /* ---------- views ---------- */
@@ -467,13 +491,14 @@ function renderMenu(){
   const open=new Set([...box.querySelectorAll('details.dish[open]')].map(x=>x.dataset.dish));
   if(n>lastCount&&n>0){open.add(state.dishes[n-1].id);if($('#addSheet').open)$('#addSheet').close()}
   lastCount=n;
-  $('#empty').classList.toggle('hide',n>0);$('#goPlan').classList.toggle('hide',n===0);$('#shopRow').classList.toggle('hide',n===0);
+  $('#empty').classList.toggle('hide',n>0);$('#goPlan').classList.toggle('hide',n===0);$('#shopBtn').classList.toggle('hide',n===0);
   $('#menuCount').textContent=n?`${n} ${n===1?'dish':'dishes'}, ${state.dishes.reduce((a,x)=>a+x.steps.length,0)} steps in all`:'';
   box.innerHTML=state.dishes.map(d=>`
   <details class="dish" style="--c:${color(d)}" data-dish="${d.id}"${open.has(d.id)?' open':''}>
     <summary><span class="av">${esc((d.name||'?').trim().charAt(0).toUpperCase())}</span><div><h3>${esc(d.name)}</h3><div class="sm">${esc(d.servings)} servings · ${d.steps.length} steps · ${fmtD(dishMin(d))}</div></div>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
     <div class="dbody">
+    <label style="margin:2px 0 6px">Recipe name<input data-dname value="${esc(d.name)}" maxlength="80"></label>
     ${(d.notes||[]).map(n=>`<div class="note">${esc(n)}</div>`).join('')}
     ${d.ing&&d.ing.length?`<details style="margin:8px 0"><summary class="muted" style="cursor:pointer;font-weight:800">Ingredients (${d.ing.length})</summary><ul style="margin:8px 0">${d.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></details>`:''}
     ${d.steps.map((s,i)=>`<div class="step" data-step="${s.id}"><div class="top"><span class="n">${i+1}</span><textarea data-f="text" rows="2" aria-label="Step ${i+1}">${esc(s.text)}</textarea></div>
@@ -488,7 +513,7 @@ $('#quick').innerHTML=Object.keys(LIB).map(k=>`<button data-lib="${esc(k)}">${es
 $('#quick').addEventListener('click',e=>{const k=e.target.dataset.lib;if(!k)return;const d=fromLib(k,Math.max(1,+$('#dserv').value||8));state.dishes.push(d);save();renderMenu();toast('Added '+d.name)});
 document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{const d=document.getElementById(b.dataset.open);if(!d.open)d.showModal()}));
 document.querySelectorAll('dialog.sheet').forEach(d=>{d.addEventListener('click',e=>{if(e.target===d||e.target.hasAttribute('data-close'))d.close()})});
-$('#dishes').addEventListener('change',e=>{const f=e.target.dataset.f;if(!f)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
+$('#dishes').addEventListener('change',e=>{if(e.target.hasAttribute('data-dname')){const dd=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);dd.name=e.target.value.trim()||dd.name;save();renderMenu();return}const f=e.target.dataset.f;if(!f)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
   const s=d.steps.find(x=>x.id===e.target.closest('[data-step]').dataset.step);s[f]=f==='min'?Math.max(1,Math.round(+e.target.value||1)):e.target.value;save()});
 $('#dishes').addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
   const row=e.target.closest('[data-step]');const i=row?d.steps.findIndex(x=>x.id===row.dataset.step):-1;
@@ -513,6 +538,7 @@ function busy(btn,on,label){btn.disabled=on;if(on){btn.dataset.l=btn.textContent
 
 $('#lookup').addEventListener('click',async e=>{
   const name=$('#dname').value.trim(),serv=Math.max(1,+$('#dserv').value||8);if(!name){msg('Type a dish name first.');$('#dname').focus();return}
+  const mine=findLib(name);if(mine){const d=addFromLib(mine.libId);if(d)msg(`Added your saved ${d.name}.`);$('#dname').value='';return}
   if(!sample){const d=fromLib(name,serv);if(d){state.dishes.push(d);save();renderMenu();msg(`Added ${d.name} from Thyme's built-in recipes.`)}else msg('Thyme does not have that one built in yet. Paste your own steps, or add an Anthropic key under Settings to look up any dish.');return}
   busy(e.target,true,'Looking up…');msg(`Finding steps for ${name}…`);
   try{const r=await sample.json(`You are Thyme, a cooking planner. Write a reliable home recipe for "${name}" serving ${serv}.\n${STEP_SCHEMA}`,{modelTier:'default'});
@@ -850,7 +876,52 @@ $('#voiceSel').addEventListener('change',e=>{voicePref.name=e.target.value;saveV
 $('#rateIn').addEventListener('change',e=>{voicePref.rate=+e.target.value;saveVoice();speakTest()});
 $('#voiceTest').addEventListener('click',()=>speakTest());
 function speakTest(){try{speechSynthesis.cancel()}catch(e){}const m=run;run=null;speak("Hi, I'm Thyme. Let's cook something lovely. Garlic chicken, 425 degrees, 15 minutes.");run=m}
-window.__thyme={plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic};
+
+/* ---------- library screen, reuse, backup ---------- */
+const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+function findLib(name){const n=norm(name);if(n.length<3)return null;return lib.find(r=>norm(r.name)===n)||lib.find(r=>n.length>=5&&(norm(r.name).includes(n)||n.includes(norm(r.name))))||null}
+function addFromLib(id){const r=lib.find(x=>x.libId===id);if(!r)return null;
+  const ex=state.dishes.find(d=>d.libId===id);if(ex){toast(`${ex.name} is already on tonight's menu`);return ex}
+  const d={id:nid(),libId:r.libId,name:r.name,servings:r.servings,ing:(r.ing||[]).slice(),notes:(r.notes||[]).slice(),steps:r.steps.map(x=>({...x,id:nid()}))};
+  r.usedAt=Date.now();state.dishes.push(d);save();saveLib();renderMenu();return d}
+function ago(t){const dd=Math.floor((Date.now()-t)/864e5);return dd<1?'today':dd===1?'yesterday':dd<30?dd+' days ago':new Date(t).toLocaleDateString([],{month:'short',day:'numeric'})}
+function renderMine(){const items=[...lib].sort((a,b)=>(b.usedAt||0)-(a.usedAt||0)).slice(0,8);$('#mineBox').classList.toggle('hide',!items.length);
+  $('#mine').innerHTML=items.map(r=>`<button data-mylib="${esc(r.libId)}">${esc(r.name)}</button>`).join('')+(lib.length>8?'<button data-seeall>See all</button>':'')}
+function renderLib(){const q=norm($('#libQ').value||'');
+  const items=[...lib].sort((a,b)=>(b.usedAt||0)-(a.usedAt||0)).filter(r=>!q||norm(r.name).includes(q)||(r.ing||[]).some(i=>norm(i).includes(q)));
+  $('#libList').innerHTML=items.length?items.map((r,i)=>`<div class="libitem" data-libid="${esc(r.libId)}"><span class="av" style="--c:${COLORS[i%COLORS.length]}">${esc((r.name||'?').trim().charAt(0).toUpperCase())}</span>
+    <div><b>${esc(r.name)}</b><div class="sm muted">${r.steps.length} steps · ${esc(r.servings)} servings · used ${ago(r.usedAt||r.savedAt)}${state.dishes.some(d=>d.libId===r.libId)?' · on menu':''}</div></div>
+    <div class="libact"><button class="${state.dishes.some(d=>d.libId===r.libId)?'sage':'pri'}" data-la="add">${state.dishes.some(d=>d.libId===r.libId)?'On menu':'Add'}</button><button data-la="edit">Edit</button><button class="x" data-la="del">Delete</button></div></div>`).join('')
+   :`<div class="empty"><p>${lib.length?'No recipes match your search.':'Nothing saved yet. Add a dish and it will show up here.'}</p></div>`;
+  $('#libWarn').classList.toggle('hide',libOK)}
+function updateLibUI(){const b=$('#libBtn');if(b)b.textContent=lib.length?`My recipes (${lib.length})`:'My recipes';renderMine();if($('#libSheet').open)renderLib()}
+$('#libQ').addEventListener('input',renderLib);
+$('#libBtn').addEventListener('click',()=>{$('#libQ').value='';renderLib()});
+document.querySelectorAll('[data-open=addSheet]').forEach(b=>b.addEventListener('click',renderMine));
+$('#mine').addEventListener('click',e=>{const id=e.target.dataset.mylib;if(id){const d=addFromLib(id);if(d&&$('#addSheet').open)$('#addSheet').close();if(d)toast('Added '+d.name)}
+  if(e.target.hasAttribute('data-seeall')){$('#addSheet').close();$('#libQ').value='';renderLib();$('#libSheet').showModal()}});
+$('#libList').addEventListener('click',e=>{const a=e.target.dataset.la;if(!a)return;const id=e.target.closest('[data-libid]').dataset.libid;
+  if(a==='add'){const d=addFromLib(id);if(d){toast('Added '+d.name);renderLib()}}
+  if(a==='edit'){const d=addFromLib(id);if(d){$('#libSheet').close();location.hash='menu';setTimeout(()=>{const el=document.querySelector(`[data-dish="${d.id}"]`);if(el){el.open=true;el.scrollIntoView({behavior:'smooth',block:'center'})}},60)}}
+  if(a==='del'){if(e.target.dataset.armed){const r=lib.find(x=>x.libId===id);lib=lib.filter(x=>x.libId!==id);state.dishes.forEach(d=>{if(d.libId===id){d.libId=null;d.noLib=true}});save();saveLib();toast(`Deleted ${r?r.name:'recipe'} from your library`)}
+    else{e.target.dataset.armed='1';e.target.textContent='Tap again to delete';setTimeout(()=>{if(e.target.isConnected){delete e.target.dataset.armed;e.target.textContent='Delete'}},3000)}}});
+$('#libExport').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({app:'thyme',version:1,exportedAt:new Date().toISOString(),recipes:lib},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='thyme-recipes.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast(`Exported ${lib.length} recipe${lib.length===1?'':'s'}`)});
+$('#libImportBtn').addEventListener('click',()=>$('#libImport').click());
+const cleanRec=r=>{if(!r||typeof r!=='object'||!Array.isArray(r.steps))return null;const str=(x,n)=>String(x??'').slice(0,n);
+  const steps=r.steps.slice(0,40).map(s=>({text:str(s&&s.text,300).trim(),min:Math.min(1440,Math.max(1,Math.round(+(s&&s.min)||5))),kind:s&&s.kind==='passive'?'passive':'active',equip:['oven','burner'].includes(s&&s.equip)?s.equip:'none'})).filter(s=>s.text);
+  if(!steps.length||!str(r.name,80).trim())return null;
+  return {libId:/^[\w-]{3,40}$/.test(String(r.libId||''))?String(r.libId):newLibId(),name:str(r.name,80).trim(),servings:Math.min(500,Math.max(1,Math.round(+r.servings)||8)),
+   ing:(Array.isArray(r.ing)?r.ing:[]).slice(0,80).map(x=>str(x,120)).filter(Boolean),notes:(Array.isArray(r.notes)?r.notes:[]).slice(0,6).map(x=>str(x,300)),steps,
+   savedAt:+r.savedAt||Date.now(),updatedAt:+r.updatedAt||Date.now(),usedAt:+r.usedAt||+r.savedAt||Date.now()}};
+$('#libImport').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{if(f.size>5e6)throw 0;const j=JSON.parse(await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsText(f)}));const list=Array.isArray(j)?j:j&&j.recipes;if(!Array.isArray(list))throw 0;
+    let added=0,updated=0;list.slice(0,500).map(cleanRec).filter(Boolean).forEach(r=>{const o=lib.find(x=>x.libId===r.libId)||lib.find(x=>norm(x.name)===norm(r.name)&&recKey(x)===recKey(r));
+      if(!o){if(lib.length<1000){lib.push(r);added++}}else if(r.updatedAt>o.updatedAt&&recKey(o)!==recKey(r)){Object.assign(o,r,{libId:o.libId});updated++}});
+    saveLib();toast(`Imported ${added} new, updated ${updated}`)}catch(err){toast('That file is not a Thyme recipe backup.')}});
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+syncLib();updateLibUI();
+window.__thyme={plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic,lib:()=>lib,addFromLib,findLib};
 show(location.hash.slice(1)||'menu');
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
