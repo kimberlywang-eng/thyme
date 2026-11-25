@@ -125,6 +125,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 .log div{padding:10px 14px;border-radius:18px;max-width:88%}
 .log .you{justify-self:end;background:var(--butter-s)}.log .th{background:var(--sage)}.log .ig{justify-self:end;color:var(--mut);font-style:italic;font-size:13px}
 
+.shop{display:flex;gap:12px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--line);font-size:16px;color:var(--ink);font-weight:600}.shop input{width:24px;height:24px;min-height:0;flex:none;margin-top:2px;accent-color:#6fae63}.shop input:checked+span{opacity:.45;text-decoration:line-through}
 /* voice orb */
 .orbwrap{position:fixed;inset:0;z-index:40;display:grid;grid-template-rows:auto 1fr auto;padding:14px 18px calc(22px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 38%,var(--sage) 0%,var(--bg) 68%);animation:fadein .25s}
 @keyframes fadein{from{opacity:0}}
@@ -172,6 +173,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
     <div class="st" id="heroStats"></div>
   </button>
   <div class="stitle" style="margin-top:26px"><h2>Tonight's menu</h2><p id="menuCount"></p></div>
+  <div class="row hide" id="shopRow" style="margin:-4px 0 6px"><button class="sage" id="shopBtn" data-open="shopSheet">Shopping list</button></div>
   <div id="empty" class="empty card"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="#f6dc78"/><path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1d3527" stroke-width="3" stroke-linecap="round"/><g fill="#8fc487" stroke="#1d3527" stroke-width="2"><ellipse rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/><ellipse rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/><ellipse rx="6.5" ry="3.5" transform="translate(44 22) rotate(-80)"/></g></svg>
     <h3>What are we cooking?</h3><p>Add your dishes and Thyme will plan the whole evening backward from dinner time.</p>
     <button class="pri big" data-open="addSheet">Add a dish</button><button class="x" id="sampleBtn" style="margin-top:6px">Try a sample dinner</button></div>
@@ -200,7 +202,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
     </div>
     <p class="muted" id="partial" style="min-height:1.4em;margin-top:8px"></p>
     <form id="cmdForm"><input id="cmd" placeholder='Type "next", "repeat" or a question' autocomplete="off"><button class="pri">Send</button></form>
-    <details class="help"><summary>What can I say?</summary><p style="margin-top:6px">"Next" or "done", "repeat", "what's next", "timers", "mute" and "unmute". Start with "Thyme…" to ask about your recipes.</p></details>
+    <details class="help"><summary>What can I say?</summary><p style="margin-top:6px">"Next" or "done", "repeat", "what's next", "timers", "mute" and "unmute". Ask about your recipes: "how much butter do I need?", "what temperature for the chicken?", "how long does the crumble bake?"</p></details>
   </div>
   <h3 class="sub">Timers</h3><div class="timers" id="timers"></div>
   <h3 class="sub">Coming up</h3><ol class="tl" id="upcoming"></ol>
@@ -252,6 +254,12 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
   </div>
   <p class="muted" style="margin-top:12px">Extra time stretches every hands-on step for slow chopping or a phone call. Finishing early leaves a spare block before serving.</p>
   <div class="row" style="margin-top:14px"><button class="pri big" data-close>Done</button></div>
+</dialog>
+
+<dialog class="sheet" id="shopSheet"><div class="grab"></div>
+  <h2>Shopping list</h2><p class="muted" style="margin-bottom:10px">Everything on your menu, added up. Tap to tick things off.</p>
+  <div id="shopList"></div>
+  <div class="row" style="margin-top:14px"><button class="big" data-close>Close</button></div>
 </dialog>
 
 <dialog class="sheet" id="settingsSheet"><div class="grab"></div>
@@ -330,7 +338,96 @@ const LIB={
  'cranberry sauce':{ing:['12 oz cranberries','3/4 cup sugar','3/4 cup water','1 orange (zest)'],steps:[['Combine cranberries, sugar, water and zest in a pot.',3,'active','burner'],['Simmer until berries pop and sauce thickens.',15,'passive','burner'],['Chill until serving.',60,'passive','none']]}
 };
 const fromLib=(name,serv)=>{const k=Object.keys(LIB).find(k=>k.includes(name.toLowerCase().trim())||name.toLowerCase().includes(k));if(!k)return null;const r=LIB[k];
-  return {id:nid(),name:k.replace(/\b\w/g,c=>c.toUpperCase()),servings:serv,ing:r.ing.slice(),notes:[],steps:r.steps.map(([text,min,kind,equip])=>({id:nid(),text,min,kind,equip}))}};
+  return {id:nid(),name:k.replace(/\b\w/g,c=>c.toUpperCase()),servings:serv,ing:r.ing.flatMap(splitIng).map(i=>serv&&serv!==8?scaleOne(i,serv/8):i),notes:[],steps:r.steps.map(([text,min,kind,equip])=>({id:nid(),text,min,kind,equip}))}};
+
+/* ---------- ingredients: read quantities and add them up (works without AI) ---------- */
+const FR={'¼':.25,'½':.5,'¾':.75,'⅓':1/3,'⅔':2/3,'⅛':.125};
+const UNITS={tsp:'tsp tsps teaspoon teaspoons',tbsp:'tbsp tbsps tbs tablespoon tablespoons',cup:'cup cups',oz:'oz ounce ounces',lb:'lb lbs pound pounds',g:'g gram grams',kg:'kg kilogram kilograms',ml:'ml milliliter milliliters',l:'l liter liters litre litres',stick:'stick sticks',clove:'clove cloves',can:'can cans',pinch:'pinch pinches',dash:'dash dashes',bunch:'bunch bunches',slice:'slice slices',head:'head heads',sprig:'sprig sprigs'};
+const UL={};Object.entries(UNITS).forEach(([k,v])=>v.split(' ').forEach(w=>UL[w]=k));
+const UNAME={tsp:'teaspoon',tbsp:'tablespoon',cup:'cup',oz:'ounce',lb:'pound',g:'gram',kg:'kilogram',ml:'milliliter',l:'liter',stick:'stick',clove:'clove',can:'can',pinch:'pinch',dash:'dash',bunch:'bunch',slice:'slice',head:'head',sprig:'sprig'};
+const ADJ=/^(soft|softened|cold|melted|unsalted|salted|fresh|freshly|large|medium|small|whole|minced|chopped|diced|sliced|smashed|grated|shredded|ripe|plain|packed|boneless|skinless|extra|virgin|extra-virgin|heavy|light|dark|finely|roughly|thinly|dried|frozen|canned|yukon|gold|long|grain|all-purpose|granulated|baby|fine|coarse|kosher|sea|good|quality|big|half)$/i;
+const num=s=>{s=String(s).trim();const m=s.match(/^(\d+)\s+(\d+)\/(\d+)$/);if(m)return +m[1]+m[2]/m[3];const f=s.match(/^(\d+)\/(\d+)$/);if(f)return f[1]/f[2];return parseFloat(s)};
+function singular(w){w=w.toLowerCase();if(w.length<4)return w;if(/ies$/.test(w))return w.slice(0,-3)+'y';if(/(tomato|potato|mango)es$/.test(w))return w.slice(0,-2);if(/(ch|sh|x|ss|zz)es$/.test(w))return w.slice(0,-2);if(/ves$/.test(w)&&!/cloves$/.test(w))return w.slice(0,-3)+'f';if(/(ss|us|is)$/.test(w))return w;return w.replace(/s$/,'')}
+function plural(w){if(/(s|x|ch|sh)$/.test(w))return w+'es';if(/[^aeiou]y$/.test(w))return w.slice(0,-1)+'ies';if(/(tomato|potato|mango)$/.test(w))return w+'es';return w+'s'}
+function splitIng(str){str=String(str);const parts=str.split(/,\s*(?=\d|[¼½¾⅓⅔⅛])/);
+  return parts.flatMap(p=>/^\s*(\d|[¼½¾⅓⅔⅛])/.test(p)?[p.trim()]:p.split(/,\s*/).filter(x=>x.trim()).map(x=>x.trim()))}
+function parseIng(raw){
+  let t=String(raw).replace(/(\d+)?\s*([¼½¾⅓⅔⅛])/g,(m,a,f)=>String((a?+a:0)+FR[f])).replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
+  const m=t.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.\d+|\d+)(?:\s*(?:-|to)\s*(\d+\/\d+|\d*\.\d+|\d+))?\s*(.*)$/i);
+  let q=null,rest=t,u='';if(m){q=num(m[2]||m[1]);rest=m[3]}
+  const um=rest.match(/^([a-zA-Z]+)\.?\s+(.*)$/);if(q!=null&&um&&UL[um[1].toLowerCase()]){u=UL[um[1].toLowerCase()];rest=um[2]}
+  rest=rest.replace(/^of\s+/i,'').split(',')[0].replace(/\s+(to taste|for [a-z ]+|as needed|divided|plus more.*)$/i,'').trim();
+  const cm=rest.match(/^(.+?)\s+cloves?$/i);if(cm&&!u){u='clove';rest=cm[1]}
+  const words=rest.toLowerCase().split(/\s+/).filter(Boolean);while(words.length>1&&ADJ.test(words[0]))words.shift();
+  const disp=words.join(' ');if(words.length)words[words.length-1]=singular(words[words.length-1]);
+  return {q,u,name:words.join(' '),disp,raw:String(raw).trim()}}
+function fmtQty(n){const w=Math.floor(n+1e-9),f=n-w,opts=[[0,''],[.25,'a quarter'],[1/3,'a third'],[.5,'a half'],[2/3,'two thirds'],[.75,'three quarters'],[1,'']];
+  let best=opts.reduce((a,b)=>Math.abs(b[0]-f)<Math.abs(a[0]-f)?b:a);
+  if(Math.abs(best[0]-f)>.07)return String(Math.round(n*10)/10);
+  if(best[0]===1)return String(w+1);if(best[0]===0)return String(w);
+  if(w===0)return best[1]==='a half'?'half':best[1];return `${w} and ${best[1]}`}
+const uname=(u,q)=>UNAME[u]+(q>1?(/(ch|sh)$/.test(UNAME[u])?'es':'s'):'');
+function fam(e){if(['tsp','tbsp','cup'].includes(e.u)||(e.u==='stick'&&/butter/.test(e.name)))return 'vol';if(['oz','lb','g','kg'].includes(e.u))return 'wt';if(['ml','l'].includes(e.u))return 'ml';return 'n:'+e.u}
+const BASE={tsp:1,tbsp:3,cup:48,stick:24,oz:1,lb:16,g:.035274,kg:35.274,ml:1,l:1000};
+const toBase=e=>fam(e).startsWith('n:')?e.q:e.q*BASE[e.u];
+function fmtVol(t){const cf=t/48,fr=cf-Math.floor(cf);if(t>=12&&[0,.25,1/3,.5,2/3,.75].some(x=>Math.abs(fr-x)<.01)){if(cf<1)return {.25:'a quarter cup',.33:'a third of a cup',.5:'half a cup',.67:'two thirds of a cup',.75:'three quarters of a cup'}[Math.round(cf*100)/100]||`${fmtQty(cf)} cup`;return `${fmtQty(cf)} ${cf>1?'cups':'cup'}`}
+  const c=Math.floor(t/48+1e-9),r=t-c*48;const bits=[];if(c)bits.push(`${c} cup${c>1?'s':''}`);
+  if(r>=2.9){const tb=Math.floor(r/3+1e-9),ts=r-tb*3;bits.push(`${fmtQty(tb)} tablespoon${tb>1?'s':''}`);if(ts>=.25)bits.push(`${fmtQty(ts)} teaspoon${ts>1?'s':''}`)}
+  else if(r>=.2)bits.push(`${fmtQty(r)} teaspoon${r>1?'s':''}`);return bits.join(' and ')||'0'}
+function fmtWt(o){if(o>=16){const l=Math.floor(o/16),r=Math.round(o-l*16);return `${l} pound${l>1?'s':''}`+(r?` and ${r} ounce${r>1?'s':''}`:'')}return `${fmtQty(o)} ounce${o>1?'s':''}`}
+function fmtTotal(f,b,name){
+  if(f==='vol'){let s=`${fmtVol(b)} of ${name}`;if(/butter/.test(name)&&b>=12)s+=` (about ${fmtQty(Math.round(b/24*4)/4)} stick${b/24>1?'s':''})`;return s}
+  if(f==='wt')return `${fmtWt(b)} of ${name}`;
+  if(f==='ml')return `${b>=1000?fmtQty(b/1000)+' liters':Math.round(b)+' milliliters'} of ${name}`;
+  const u=f.slice(2);if(u)return `${fmtQty(b)} ${uname(u,b)} of ${name}`;return `${fmtQty(b)} ${b>1?plural(name):name}`}
+function ingEntries(d,f=1){return (d.ing||[]).flatMap(splitIng).map(r=>{const e=parseIng(r);e.dish=d;if(e.q!=null)e.q*=f;return e}).filter(e=>e.name)}
+function sumByFam(ents){const m={};ents.filter(e=>e.q!=null).forEach(e=>{const k=fam(e);m[k]=(m[k]||0)+toBase(e)});return m}
+function fmtMixed(v){const W=Math.floor(v+1e-9),fr=v-W,o=[[0,''],[1/8,'1/8'],[1/4,'1/4'],[1/3,'1/3'],[3/8,'3/8'],[1/2,'1/2'],[5/8,'5/8'],[2/3,'2/3'],[3/4,'3/4'],[7/8,'7/8'],[1,'']];
+  const b=o.reduce((a,c)=>Math.abs(c[0]-fr)<Math.abs(a[0]-fr)?c:a);if(b[0]===1)return String(W+1);if(!b[1])return String(W);return (W?W+' ':'')+b[1]}
+function scaleOne(raw,f){return raw.replace(/^(\s*)(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.\d+|\d+)/,(m,sp,n)=>sp+fmtMixed(num(n)*f))}
+const STOPW=new Set('do will would should can are is am i we you for in total altogether overall across all need needed does did to of the a an any some much many my our get buy use have make'.split(' '));
+const dishWords=d=>d.name.toLowerCase().split(/\s+/).map(singular);
+function scopeDishes(q,termWords){const ws=q.split(' ').filter(w=>w.length>=4&&!STOPW.has(w)&&!termWords.includes(singular(w))).map(singular);
+  const hit=state.dishes.filter(d=>dishWords(d).some(w=>ws.includes(w)));return hit.length?hit:null}
+function localAnswer(q){
+  q=q.toLowerCase();if(!state.dishes.length)return null;
+  const guests=(q.match(/\bfor (\d+)\s*(?:people|guests|servings|adults|folks|persons|diners)\b/)||[])[1];
+  // how much / how many <ingredient>
+  let t=q.match(/\bhow (?:much|many) (.+)$/)||q.match(/\b(?:do|will|would|should|can) (?:i|we) need (.+)$/);
+  if(t&&!/\bingredients?\b|\bshopping\b/.test(q)&&!/^(for|to|time|minutes?|hours?|longer|long|servings?|people|guests|steps?|dishes|burners?|ovens?)\b/.test(t[1])){
+    const toks=[];for(const w of t[1].split(' ')){if(STOPW.has(w)&&toks.length)break;if(!STOPW.has(w))toks.push(w)}
+    const term=toks.map(singular).join(' ').trim();
+    if(term){const tw=toks.map(singular);const scope=scopeDishes(q,tw)||state.dishes;
+      const ents=scope.flatMap(d=>ingEntries(d,guests?guests/(d.servings||8):1)).filter(e=>e.name.includes(term)||(e.name.length>2&&term.includes(e.name))||e.name.split(' ').some(w=>tw.includes(w)));
+      const lead=guests?`For ${guests} guests, `:'';
+      if(!ents.length){const empty=scope.filter(d=>!(d.ing||[]).length).map(d=>d.name);
+        return `I don't see ${toks.join(' ')} in ${scope.length===1?scope[0].name:'your ingredient lists'}.`+(empty.length?` ${empty.join(' and ')} has no ingredient list yet, so check it on the Menu tab.`:'')}
+      const names=[...new Set(ents.map(e=>e.name))];const label=names.length===1?ents[0].disp:toks.join(' ');
+      const withQ=ents.filter(e=>e.q!=null);
+      if(!withQ.length)return `${label} is in the recipe but without an amount, so it's probably to taste.`;
+      const tot=sumByFam(ents),parts=Object.entries(tot).map(([f,b])=>fmtTotal(f,b,label));
+      const byDish=[...new Set(withQ.map(e=>e.dish))];
+      if(byDish.length===1)return `${lead}${byDish[0].name} needs ${parts.join(' plus ')}.`;
+      const each=byDish.map(d=>{const s=sumByFam(withQ.filter(e=>e.dish===d));return Object.entries(s).map(([f,b])=>fmtTotal(f,b,label).replace(/ of .*$/,'').replace(new RegExp(' '+label+'.*$'),''))+' for '+d.name}).join(', ');
+      return `${lead?lead+'you':'You'} need ${parts.join(' plus ')} in all. That's ${each}.`}}
+  // what ingredients
+  if(/\bingredients?\b|\bshopping list\b|\bwhat (?:do i|will i|should i) (?:buy|need)\b/.test(q)){
+    const scope=scopeDishes(q,[]);
+    if(scope&&scope.length===1){const d=scope[0],list=(d.ing||[]);return list.length?`${d.name} needs ${list.join(', ')}.`:`${d.name} has no ingredient list yet.`}
+    const n=new Set(state.dishes.flatMap(d=>ingEntries(d).map(e=>e.name))).size;
+    return `Your menu uses ${n} different ingredients. Ask me about a dish, like "ingredients for the chicken", or open the shopping list on the Menu tab.`}
+  // temperature
+  if(/\b(temperature|temp|how hot|degrees|preheat)\b/.test(q)){
+    const scope=scopeDishes(q,[])||(chefStep()?[chefStep().dish]:state.dishes);
+    const hits=scope.flatMap(d=>d.steps.filter(s=>/\d{3}\s*°/.test(s.text)).map(s=>`${d.name}: ${s.text}`));
+    if(hits.length)return hits.slice(0,3).join(' ')}
+  // how long
+  if(/\bhow long\b|\bhow many (?:minutes|hours)\b|\bhow much time\b/.test(q)){
+    const sd=scopeDishes(q,[]),scope=sd||state.dishes,skip=sd&&sd.length===1?dishWords(sd[0]):[];const ws=q.split(' ').filter(w=>w.length>3&&!STOPW.has(w)).map(singular).filter(w=>!skip.includes(w));
+    let best=null,sc=0;scope.forEach(d=>d.steps.forEach(s=>{const n=ws.filter(w=>s.text.toLowerCase().includes(w)).length;if(n>sc){sc=n;best={d,s}}}));
+    if(!best&&chefStep())best={d:chefStep().dish,s:chefStep().s};
+    if(best)return `${best.d.name}: ${best.s.text} That takes ${fmtD(best.s.min)}.`}
+  return null}
 
 /* ---------- state ---------- */
 const defServe=()=>{const d=new Date();d.setHours(19,0,0,0);if(d<new Date())d.setDate(d.getDate()+1);return toLocalInput(d)};
@@ -370,7 +467,7 @@ function renderMenu(){
   const open=new Set([...box.querySelectorAll('details.dish[open]')].map(x=>x.dataset.dish));
   if(n>lastCount&&n>0){open.add(state.dishes[n-1].id);if($('#addSheet').open)$('#addSheet').close()}
   lastCount=n;
-  $('#empty').classList.toggle('hide',n>0);$('#goPlan').classList.toggle('hide',n===0);
+  $('#empty').classList.toggle('hide',n>0);$('#goPlan').classList.toggle('hide',n===0);$('#shopRow').classList.toggle('hide',n===0);
   $('#menuCount').textContent=n?`${n} ${n===1?'dish':'dishes'}, ${state.dishes.reduce((a,x)=>a+x.steps.length,0)} steps in all`:'';
   box.innerHTML=state.dishes.map(d=>`
   <details class="dish" style="--c:${color(d)}" data-dish="${d.id}"${open.has(d.id)?' open':''}>
@@ -404,7 +501,7 @@ $('#pasteBtn').addEventListener('click',()=>$('#pasteBox').classList.toggle('hid
 $('#sampleBtn').addEventListener('click',()=>{state.dishes=['garlic roast chicken','garlic mashed potatoes','lemon garlic green beans','apple crumble'].map(n=>fromLib(n,8));save();renderMenu();msg('Loaded a four-dish sample dinner. Open the Plan to see how Thyme interleaves it.')});
 $('#clearBtn').addEventListener('click',()=>{state.dishes=[];save();renderMenu()});
 
-const STEP_SCHEMA=`Return only JSON: {"name": string, "ingredients": [string], "notes": [string], "steps": [{"text": string, "min": integer, "kind": "active"|"passive", "equip": "none"|"oven"|"burner"}]}.
+const STEP_SCHEMA=`Return only JSON: {"name": string, "ingredients": [string with quantity and unit, like "6 tbsp butter", scaled for the stated servings], "notes": [string], "steps": [{"text": string, "min": integer, "kind": "active"|"passive", "equip": "none"|"oven"|"burner"}]}.
 Rules: "active" means hands-on, the cook must be there (chopping, searing, stirring, assembling, plating). "passive" means it runs unattended (baking, roasting, simmering, boiling water, resting, chilling, marinating, preheating). "equip" is what the step occupies for its whole duration: "oven" for preheating, baking, roasting; "burner" for anything on the stovetop; otherwise "none". "min" is realistic minutes for the stated servings. Each step is one short imperative sentence a cook can hear read aloud, with quantities and temperatures in it. Split steps that mix hands-on and hands-off work.`;
 
 function normDish(r,fallbackName,serv){
@@ -425,8 +522,11 @@ $('#lookup').addEventListener('click',async e=>{
 });
 
 function heuristic(txt,name,serv){
-  const lines=txt.split(/\n+|(?<=\.)\s+(?=[A-Z])/).map(l=>l.replace(/^\s*(\d+[.)]|[-*•])\s*/,'').trim()).filter(l=>l.length>2);
-  return {id:nid(),name:name||'My recipe',servings:serv,ing:[],notes:['Thyme guessed the minutes and hands-on/hands-off for these steps. Please check them.'],steps:lines.map(t=>{
+  const isIng=l=>/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.\d+|\d+|[¼½¾⅓⅔⅛])\s*(?:-\s*)?(cups?|tbsp|tbs|tsp|tablespoons?|teaspoons?|lbs?|pounds?|oz|ounces?|g|grams?|kg|ml|l|cloves?|sticks?|cans?|pinch|large|medium|small|whole|eggs?)\b/i.test(l)&&l.length<70&&!/[.!]$/.test(l);
+  const all=[];let sec='';txt.split(/\n+/).forEach(l=>{l=l.trim();if(!l)return;const h=l.match(/^(ingredients|directions|instructions|method|steps|preparation)\s*:?$/i);if(h){sec=/ingredients/i.test(h[1])?'ing':'steps';return}
+    if(sec==='ing'||isIng(l))all.push({ing:true,t:l.replace(/^\s*[-*•]\s*/,'')});else l.split(/(?<=\.)\s+(?=[A-Z])/).forEach(x=>all.push({t:x.replace(/^\s*(\d+[.)]|[-*•])\s*/,'').trim()}))});
+  const lines=all.filter(x=>!x.ing).map(x=>x.t).filter(l=>l.length>2),ings=all.filter(x=>x.ing).map(x=>x.t);
+  return {id:nid(),name:name||'My recipe',servings:serv,ing:ings,notes:['Thyme guessed the minutes and hands-on/hands-off for these steps. Please check them.'],steps:lines.map(t=>{
     const lo=t.toLowerCase();const m=lo.match(/(\d+)(?:\s*(?:-|to)\s*(\d+))?\s*(hours?|hrs?|minutes?|mins?)/);
     let min=m?(+(m[2]||m[1]))*(/h/.test(m[3])?60:1):0;
     const passive=/\b(bake|roast|simmer|rest|chill|marinate|boil|rise|cool|refrigerate|preheat|braise)\b/.test(lo);
@@ -700,7 +800,8 @@ async function ask(q){
   const c=chefStep();thinking=true;pauseMic();updateOrb();
   try{await ask2(q,c)}finally{thinking=false;updateOrb()}}
 async function ask2(q,c){
-  if(sample){try{const r=await sample(`You are Thyme, a voice kitchen assistant. Answer the cook's question using ONLY the recipes below. Do not use outside cooking knowledge. If the recipes don't answer it, say: "That isn't in your recipe, so I won't guess." and, if useful, name the closest step. Reply in at most two short spoken sentences, no markdown.\n\nRECIPES:\n${recipeText()}\n\n${c?`CURRENT STEP: ${c.dish.name}: ${c.s.text}\n\n`:''}QUESTION: ${q}`,{modelTier:'quick',cache:false});
+  try{const loc=localAnswer(q);if(loc){say(loc);return}}catch(e){}
+  if(sample){try{const r=await sample(`You are Thyme, a voice kitchen assistant. Answer the cook's question using ONLY the recipes below. Do not use outside cooking knowledge. If the recipes don't answer it, say: "That isn't in your recipe, so I won't guess." and, if useful, name the closest step. For amounts, add up the quantities across dishes (1 stick of butter is 8 tablespoons, 1 cup is 16 tablespoons) and name each dish. Reply in at most three short spoken sentences, no markdown.\n\nRECIPES:\n${recipeText()}\n\n${c?`CURRENT STEP: ${c.dish.name}: ${c.s.text}\n\n`:''}QUESTION: ${q}`,{modelTier:'quick',cache:false});
       say(String(r.text||'').trim()||'Sorry, I did not get an answer.');return}catch(e){}}
   // offline fallback: find the step or ingredient that best matches the question's words
   const words=q.split(' ').filter(w=>w.length>3&&!/^(what|when|where|which|does|should|thyme|how|long|much|the|with|about|have)$/.test(w));
@@ -736,12 +837,20 @@ $('#repeatBtn').addEventListener('click',()=>{unlockAudio();repeat()});
 $('#pauseBtn').addEventListener('click',()=>{unlockAudio();pause(!(run&&run.muted))});
 
 if(!SR)micUI(false,'Voice input is not supported in this browser. Use Chrome or Edge, or type below.');
+function renderShop(){
+  const g={};state.dishes.forEach(d=>ingEntries(d).forEach(e=>{(g[e.name]=g[e.name]||[]).push(e)}));
+  const names=Object.keys(g).sort();
+  $('#shopList').innerHTML=names.length?names.map(n=>{const es=g[n],tot=sumByFam(es),parts=Object.entries(tot).map(([f,b])=>fmtTotal(f,b,n).replace(new RegExp(' of '+n+'.*$'),'').replace(new RegExp(' '+n+'.*$'),''));
+    const un=es.filter(e=>e.q==null).length;const amt=parts.length?parts.join(' + ')+(un?' + a little':''):'as needed';
+    const by=es.map(e=>e.dish.name.split(' ').slice(-1)[0]+(e.q!=null?' '+e.raw.replace(/\s*\(.*\)/,''):'')).join(' · ');
+    return `<label class="shop"><input type="checkbox"><span><b>${esc((es[0].disp||n).charAt(0).toUpperCase()+(es[0].disp||n).slice(1))}</b> <span class="muted">${esc(amt)}</span><div class="muted" style="font-weight:600">${esc(by)}</div></span></label>`}).join(''):'<p class="muted">No ingredients yet. Add dishes with ingredient lists to build one.</p>'}
+$('#shopBtn').addEventListener('click',renderShop);
 $('#rateIn').value=voicePref.rate;loadVoices();
 $('#voiceSel').addEventListener('change',e=>{voicePref.name=e.target.value;saveVoice();speakTest()});
 $('#rateIn').addEventListener('change',e=>{voicePref.rate=+e.target.value;saveVoice();speakTest()});
 $('#voiceTest').addEventListener('click',()=>speakTest());
 function speakTest(){try{speechSynthesis.cancel()}catch(e){}const m=run;run=null;speak("Hi, I'm Thyme. Let's cook something lovely. Garlic chicken, 425 degrees, 15 minutes.");run=m}
-window.__thyme={plan,tick,heard,run:()=>run,state:()=>state};
+window.__thyme={plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic};
 show(location.hash.slice(1)||'menu');
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
