@@ -8,187 +8,229 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
-/* VOICE: calm, capable sous-chef; short clear words, big numbers you can read from the stove.
-   IDEA: a kitchen ticket rail: each dish is a ticket, each step a line with its time hanging out front.
-   PICTURE: the working tool itself: the Cook screen's big countdown card and the lane chart of dishes.
-   COLOUR and TYPE: pastel sage and butter yellow on warm cream, deep green ink; Nunito throughout.
-   LAYOUT: one column, tabs Menu / Plan / Cook, controls stacked on phones. */
+/* VOICE: a friendly kitchen companion app; warm, calm, big and tappable.
+   IDEA: a recipe-box card app: cream paper, soft cards, one thyme sprig as the mark.
+   PICTURE: the working screens themselves: dinner-time hero, colour-coded timeline, big cook-mode timer.
+   COLOUR and TYPE: warm cream ground, pastel sage and butter yellow fields, deep green ink; Nunito throughout.
+   LAYOUT: phone-width app column with a bottom tab bar, bottom sheets for editing, floating add button. */
 :root{color-scheme:light dark;
---bg:light-dark(#fffdf2,#0f1612);--ink:light-dark(#1f3a2c,#e8f0e4);--mut:light-dark(#5f7566,#a3b7a8);
---herb:light-dark(#dcebd0,#1b2d22);--onherb:light-dark(#1f3a2c,#eaf3e4);--mutherb:light-dark(#506b58,#b9d3c3);
---leaf:light-dark(#a9d49f,#4f8f62);--pane:light-dark(#f2f6e2,#17231b);--line:light-dark(#e0e7c6,#2b3c31);
---tom:light-dark(#f4d56a,#d9b94c);--onacc:#1f3a2c;--card:light-dark(#fffef8,#121c16);--over:light-dark(#b5432a,#ffb4a3)}
+--page:light-dark(#e9efdc,#0a100d);--bg:light-dark(#fbf8ec,#0f1612);--card:light-dark(#ffffff,#17231b);--ink:light-dark(#1d3527,#e8f0e4);
+--mut:light-dark(#69806f,#9fb4a4);--sage:light-dark(#d4e8c9,#1f3527);--sage2:light-dark(#a4d198,#5aa271);--butter:light-dark(#f6dc78,#e3c35a);
+--butter-s:light-dark(#fcf1c2,#2b2913);--line:light-dark(rgba(29,53,39,.1),rgba(232,240,228,.12));--onacc:#1d3527;--over:light-dark(#b5432a,#ffb4a3);
+--sh:light-dark(0 8px 28px rgba(29,53,39,.09),0 8px 28px rgba(0,0,0,.35))}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
-*{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip}
-h1,h2,h3{font-family:Nunito,system-ui,sans-serif;line-height:1.1;margin:0}
-.band{padding:clamp(20px,3vw,40px) max(5vw,16px)}
-.wrap{max-width:1100px;margin:0 auto}
-header{background:linear-gradient(120deg,var(--herb) 55%,light-dark(#f6ecb4,#2a3320));color:var(--onherb);border-bottom:1px solid var(--line)}
-header .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
-header h1{font-size:clamp(34px,5vw,48px);font-weight:800;letter-spacing:-.02em}
-header p{margin:4px 0 0;color:var(--mutherb)}.brand{display:flex;gap:14px;align-items:center}.brand svg{width:68px;height:68px;flex:none}
-nav{display:flex;gap:6px;flex-wrap:wrap}
-nav button{background:rgba(255,255,255,.35);color:var(--onherb);border:1px solid light-dark(#b8cfa9,#4d6b5a);border-radius:999px}
-nav button[aria-current=true]{background:var(--tom);color:var(--onacc);border-color:var(--tom)}
-button,input,select,textarea{font:inherit;font-size:16px;color:inherit}
-button{min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:700}
-button.pri{background:var(--tom);border-color:var(--tom);color:var(--onacc)}
-button.grn{background:var(--leaf);border-color:var(--leaf);color:var(--onacc)}
-button:disabled{opacity:.5;cursor:default}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid light-dark(#2f7d5b,#f4d56a);outline-offset:2px}
-input,select,textarea{min-height:44px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card)}
-textarea{width:100%;min-height:140px}
-label{font-size:14px;color:var(--mut);display:grid;gap:4px}
-.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.pane{background:var(--pane);border-radius:22px;padding:18px;border:1px solid var(--line)}
-.muted{color:var(--mut);font-size:14px}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:72px}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 Nunito,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,p{margin:0}
+.app{max-width:520px;margin:0 auto;min-height:100dvh;background:var(--bg);padding-bottom:calc(104px + env(safe-area-inset-bottom));position:relative}
+@media(min-width:560px){.app{box-shadow:0 0 60px rgba(29,53,39,.12)}}
 .hide{display:none!important}
-h2{font-size:24px;margin-bottom:12px}
-section+section,.row+section{margin-top:22px}
-.dish{border:1px solid var(--line);border-radius:20px;padding:16px;background:var(--card);margin-top:14px;border-top:8px solid var(--c)}
-.dish header{background:none;color:inherit;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.dish h3{font-size:20px;flex:1}
-.steps{width:100%;border-collapse:collapse;margin-top:10px}
-.steps td{padding:4px;vertical-align:top}
-.steps td:first-child{width:28px;color:var(--mut);padding-top:14px;text-align:right}
-.steps input.t{width:100%}
-.steps input.m{width:72px;text-align:right}
-.x{min-height:44px;padding:0 12px;background:none;border-color:transparent;color:var(--mut)}
-.note{background:light-dark(#fbf1c2,#2b2913);border-radius:8px;padding:8px 12px;font-size:14px;margin-top:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
-.lane .chip{overflow:hidden;text-overflow:ellipsis;display:block}.chip::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
-.tag{font-size:12px;border-radius:6px;padding:2px 7px;white-space:nowrap;border:1px solid var(--line)}
-.tag.a{background:var(--tom);color:var(--onacc);border-color:var(--tom)}
-.big{font-family:Nunito,system-ui,sans-serif;font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.05}
-.lanes{display:grid;gap:8px;margin-top:10px}
-.lane{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;align-items:center}
-.track{position:relative;height:30px;background:var(--pane);border-radius:6px}
-.bar{position:absolute;top:3px;bottom:3px;border-radius:4px;background:var(--c);opacity:.9}
-.bar.p{background:repeating-linear-gradient(45deg,var(--c) 0 4px,transparent 4px 8px);border:2px solid var(--c);opacity:.75}
-.axis{display:flex;justify-content:space-between;margin-left:138px;font-size:13px;color:var(--mut)}
-.tl{list-style:none;padding:0;margin:0}
-.tl li{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
-.tl time{font-family:Nunito,system-ui,sans-serif;font-weight:800;font-size:18px;white-space:nowrap;text-align:right}
-.tl .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.now{background:var(--herb);color:var(--onherb);border-radius:22px;padding:22px;border:1px solid var(--line)}
-.now .muted{color:var(--mutherb)}
-.count{font-family:Nunito,system-ui,sans-serif;font-weight:800;font-size:clamp(56px,13vw,104px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.count.over{color:var(--over)}
-.timers{display:grid;gap:8px}
-.timer{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--pane);border-radius:10px;padding:10px 14px}
-.timer b{font-family:Nunito,system-ui,sans-serif;font-size:24px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cookgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px}
-.mic{width:64px;height:64px;border-radius:50%;padding:0;display:grid;place-items:center;flex:none}
-.mic.on{background:var(--tom);border-color:var(--tom);color:var(--onacc);animation:pulse 1.6s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(244,213,106,.35)}}
-@media (prefers-reduced-motion:reduce){.mic.on{animation:none}}
-.log{max-height:300px;overflow:auto;display:grid;gap:6px;font-size:15px}
-.log div{padding:6px 10px;border-radius:10px;max-width:90%}
-.log .you{justify-self:end;background:var(--pane)}
-.log .th{background:light-dark(#e3f0d8,#1d3326)}
-.log .ig{justify-self:end;color:var(--mut);font-style:italic;font-size:13px}
-.spin::after{content:"…";animation:none}
-@media(max-width:760px){.cookgrid{grid-template-columns:minmax(0,1fr)}.lane{grid-template-columns:80px minmax(0,1fr)}.axis{margin-left:88px}}
-@media(max-width:600px){.steps tr{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0}
-.steps td{padding:2px}.steps td:first-child{padding-top:2px}.steps td:nth-child(2){flex:1 1 calc(100% - 140px);order:0}.steps td:nth-child(6){order:1}.steps td:nth-child(3),.steps td:nth-child(4),.steps td:nth-child(5){order:2}
-.tl li{grid-template-columns:70px minmax(0,1fr)}}
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 18px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px)}
+.topbar svg.logo{width:38px;height:38px;flex:none}.topbar b{font-size:24px;font-weight:900;letter-spacing:-.02em;flex:1}
+.icon{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--sh);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0}
+.icon svg{width:22px;height:22px}
+.screen{padding:6px 18px 24px}
+.stitle{margin:10px 0 16px}.stitle h2{font-size:32px;font-weight:900;line-height:1.1;letter-spacing:-.02em}.stitle p{color:var(--mut);margin-top:4px}
+.sub{font-size:19px;font-weight:800;margin:26px 0 10px}
+.muted{color:var(--mut);font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{min-height:48px;padding:10px 20px;border-radius:999px;border:0;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);cursor:pointer;font-weight:800}
+button:active{transform:scale(.97)}
+button.pri{background:var(--butter);color:var(--onacc);box-shadow:0 6px 16px rgba(240,200,60,.35)}
+button.sage{background:var(--sage);box-shadow:none}
+button.big{width:100%;min-height:58px;font-size:18px}
+button.x{background:none;box-shadow:none;color:var(--mut);min-height:44px;padding:8px 12px}
+button:disabled{opacity:.5}
+:focus-visible{outline:3px solid light-dark(#2f7d5b,#f4d56a);outline-offset:2px}
+input,select,textarea{min-height:48px;padding:10px 14px;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);width:100%}
+textarea{min-height:130px;resize:vertical}
+label{display:grid;gap:6px;font-size:13px;font-weight:700;color:var(--mut)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid .wide{grid-column:1/-1}
+.card{background:var(--card);border-radius:26px;box-shadow:var(--sh);padding:18px}
+/* hero */
+.hero{border-radius:30px;padding:22px;background:linear-gradient(135deg,var(--sage) 0%,var(--sage) 45%,var(--butter-s) 100%);position:relative;overflow:hidden;border:0;width:100%;text-align:left;display:block;box-shadow:var(--sh)}
+.hero .k{font-size:14px;font-weight:700;color:var(--mut)}.hero .big{font-size:clamp(44px,14vw,64px);font-weight:900;line-height:1;letter-spacing:-.03em;margin:4px 0}
+.hero .d{font-weight:700}.hero .st{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pill{display:inline-flex;gap:6px;align-items:center;background:rgba(255,255,255,.6);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800;white-space:nowrap}
+:root[data-theme=dark] .pill{background:rgba(255,255,255,.1)}@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .pill{background:rgba(255,255,255,.1)}}
+.hero .spr{position:absolute;right:-14px;top:-10px;width:130px;opacity:.28;transform:rotate(18deg)}
+/* dishes */
+.dish{background:var(--card);border-radius:24px;box-shadow:var(--sh);margin-top:12px;overflow:hidden}
+.dish summary{list-style:none;display:flex;gap:14px;align-items:center;padding:14px 16px;cursor:pointer;min-height:76px}
+.dish summary::-webkit-details-marker{display:none}
+.av{width:48px;height:48px;border-radius:16px;background:var(--c);display:grid;place-items:center;font-weight:900;font-size:22px;color:#1d3527;flex:none}
+.dish h3{font-size:18px;font-weight:800;line-height:1.2}.dish .sm{color:var(--mut);font-size:14px}
+.dish summary>div{flex:1}.chev{width:22px;height:22px;transition:transform .2s;color:var(--mut)}.dish[open] .chev{transform:rotate(90deg)}
+.dbody{padding:0 16px 16px}
+.step{display:grid;gap:8px;padding:12px;border-radius:18px;background:var(--bg);margin-top:8px}
+.step .top{display:flex;gap:10px;align-items:flex-start}.step .n{width:28px;height:28px;border-radius:50%;background:var(--c);display:grid;place-items:center;font-weight:900;font-size:13px;flex:none;margin-top:10px;color:#1d3527}
+.step textarea{min-height:48px;height:auto;field-sizing:content;background:var(--card);resize:none;padding:10px 12px}
+.step .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-left:38px}
+.step .ctl input{width:78px;text-align:right}.step .ctl select{width:auto;flex:1 1 120px}
+.note{background:var(--butter-s);border-radius:16px;padding:10px 14px;font-size:14px;margin:6px 0}
+.empty{text-align:center;padding:36px 12px}.empty svg{width:110px;height:110px;margin-bottom:10px}.empty h3{font-size:22px;font-weight:900}.empty p{color:var(--mut);margin:6px 0 18px}
+.fab{position:fixed;z-index:6;bottom:calc(96px + env(safe-area-inset-bottom));right:max(18px,calc(50% - 242px));height:60px;padding:0 24px 0 18px;display:none;gap:8px;align-items:center;font-size:17px;box-shadow:0 10px 26px rgba(200,160,20,.4)}
+body[data-view=menu] .fab{display:flex}.fab svg{width:24px;height:24px}
+/* tab bar */
+nav{position:fixed;z-index:7;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,520px);display:grid;grid-template-columns:repeat(3,1fr);padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+nav button{background:none;box-shadow:none;display:grid;justify-items:center;gap:2px;min-height:60px;padding:6px;color:var(--mut);font-size:12px;border-radius:18px}
+nav button svg{width:26px;height:26px}
+nav button[aria-current=true]{color:var(--ink)}nav button[aria-current=true] .ic{background:var(--butter)}
+nav .ic{width:56px;height:32px;border-radius:999px;display:grid;place-items:center;transition:background .2s}
+/* sheets and toast */
+dialog.sheet{margin:auto auto 0;width:min(520px,100%);max-height:92dvh;border:0;border-radius:30px 30px 0 0;padding:8px 20px 26px;background:var(--card);color:var(--ink);overflow:auto}
+dialog.sheet::backdrop{background:rgba(18,32,24,.5)}
+.grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:6px auto 14px}
+.sheet h2{font-size:24px;font-weight:900;margin-bottom:14px}.sheet .row+.row,.sheet section+section{margin-top:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}.chips button{flex:none;min-height:40px;padding:6px 14px;background:var(--sage);box-shadow:none;font-size:14px}
+#toast{position:fixed;z-index:20;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:700;font-size:14px;width:max-content;max-width:min(92vw,480px);opacity:0;pointer-events:none;transition:.25s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+/* plan */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.stat{background:var(--card);border-radius:20px;padding:12px;box-shadow:var(--sh)}.stat b{display:block;font-size:20px;font-weight:900;line-height:1.1;white-space:nowrap}.stat span{font-size:12px;color:var(--mut);font-weight:700}
+.lanes{display:grid;gap:10px}.lane{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:center}
+.lane .chip{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.lane .chip::before{display:none}
+.track{position:relative;height:30px;background:var(--bg);border-radius:10px}
+.bar{position:absolute;top:4px;bottom:4px;border-radius:7px;background:var(--c)}
+.bar.p{background:repeating-linear-gradient(45deg,var(--c) 0 4px,transparent 4px 8px);border:2px solid var(--c)}
+.axis{display:flex;justify-content:space-between;margin:8px 0 0 100px;font-size:12px;color:var(--mut);font-weight:700}
+.tl{list-style:none;padding:0 0 0 0;margin:0;position:relative}
+.tl li{display:grid;grid-template-columns:66px 18px minmax(0,1fr);gap:8px;padding:0 0 14px;position:relative}
+.tl li::before{content:"";grid-column:2;grid-row:1;width:14px;height:14px;border-radius:50%;background:var(--c);margin-top:6px;box-shadow:0 0 0 4px var(--bg);z-index:1;justify-self:center}
+.tl li::after{content:"";position:absolute;left:calc(66px + 8px + 8.5px);top:12px;bottom:-6px;width:2px;background:var(--line)}
+.tl li:last-child::after{display:none}
+.tl time{grid-column:1;grid-row:1;font-weight:900;font-size:14px;text-align:right;white-space:nowrap;padding-top:3px}
+.tl li>div{grid-column:3;grid-row:1;background:var(--card);border-radius:18px;padding:12px 14px;box-shadow:var(--sh);font-weight:600}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;white-space:nowrap}.chip::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tag{font-size:12px;border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--bg);font-weight:800}.tag.a{background:var(--butter);color:var(--onacc)}
+/* cook */
+.now{border-radius:32px;padding:24px;background:linear-gradient(160deg,var(--sage),var(--butter-s));text-align:center;box-shadow:var(--sh)}
+.now .muted{color:var(--mut)}.now .txt{font-size:20px;font-weight:800;margin:12px 0 4px;line-height:1.3}
+.count{font-size:clamp(68px,22vw,104px);font-weight:900;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:10px 0}.count.over{color:var(--over)}
+.now .pill{background:var(--card)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.actions .big{grid-column:1/-1}
+.micRow{display:flex;gap:14px;align-items:center}
+.mic{width:68px;height:68px;border-radius:50%;padding:0;display:grid;place-items:center;flex:none;background:var(--sage);box-shadow:none}
+.mic svg{width:30px;height:30px}.mic.on{background:var(--butter);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 12px rgba(246,220,120,.3)}}
+@media(prefers-reduced-motion:reduce){.mic.on{animation:none}*{transition:none!important}}
+#cmdForm{display:flex;gap:8px;margin-top:14px}
+details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summary{cursor:pointer;font-weight:800}
+.timers{display:grid;gap:10px}.timer{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--sh)}
+.timer b{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.log{max-height:320px;overflow:auto;display:grid;gap:8px;font-size:15px}
+.log div{padding:10px 14px;border-radius:18px;max-width:88%}
+.log .you{justify-self:end;background:var(--butter-s)}.log .th{background:var(--sage)}.log .ig{justify-self:end;color:var(--mut);font-style:italic;font-size:13px}
 </style>
 </head>
 <body>
-<header class="band"><div class="wrap">
-  <div class="brand"><svg viewBox="0 0 80 80" role="img" aria-label="Thyme logo"><circle cx="40" cy="40" r="38" fill="#f4d56a"/><circle cx="40" cy="40" r="38" fill="none" stroke="#1f3a2c" stroke-width="2.5"/>
-<path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1f3a2c" stroke-width="3" stroke-linecap="round"/>
-<g fill="#8fc487" stroke="#1f3a2c" stroke-width="2" stroke-linejoin="round">
-<ellipse cx="0" cy="0" rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse cx="0" cy="0" rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/>
-<ellipse cx="0" cy="0" rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse cx="0" cy="0" rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/>
-<ellipse cx="0" cy="0" rx="7" ry="3.8" transform="translate(37 31) rotate(-45)"/><ellipse cx="0" cy="0" rx="7" ry="3.8" transform="translate(50 26) rotate(45)"/>
-<ellipse cx="0" cy="0" rx="6.5" ry="3.5" transform="translate(44 17) rotate(-80)"/></g></svg><div><h1>Thyme</h1><p>Your sous-chef for big dinners. Plan backward from party time, then cook hands-free.</p></div></div>
-  <nav aria-label="Views">
-    <button data-view="menu">1. Menu</button><button data-view="plan">2. Plan</button><button data-view="cook">3. Cook</button>
-  </nav>
-</div></header>
+<div class="app">
+<header class="topbar">
+  <svg class="logo" viewBox="0 0 80 80" role="img" aria-label="Thyme logo"><circle cx="40" cy="40" r="38" fill="#f6dc78"/><circle cx="40" cy="40" r="38" fill="none" stroke="#1d3527" stroke-width="2.5"/>
+<path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1d3527" stroke-width="3" stroke-linecap="round"/>
+<g fill="#8fc487" stroke="#1d3527" stroke-width="2" stroke-linejoin="round">
+<ellipse rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/>
+<ellipse rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/>
+<ellipse rx="7" ry="3.8" transform="translate(37 31) rotate(-45)"/><ellipse rx="7" ry="3.8" transform="translate(50 26) rotate(45)"/>
+<ellipse rx="6.5" ry="3.5" transform="translate(44 17) rotate(-80)"/></g></svg>
+  <b>Thyme</b>
+  <button class="icon" data-open="settingsSheet" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
 
-<main class="band"><div class="wrap">
-
+<main>
 <!-- MENU -->
-<div id="v-menu">
-  <section class="pane">
-    <h2>The party</h2>
-    <div class="grid">
-      <label>Food on the table at<input id="serve" type="datetime-local"></label>
-      <label>Burners<input id="burners" type="number" min="1" max="8"></label>
-      <label>Oven slots (dishes at once)<input id="ovens" type="number" min="1" max="4"></label>
-      <label>Cushion on hands-on steps (%)<input id="buffer" type="number" min="0" max="100" step="5"></label>
-      <label>Finish early by (min)<input id="tail" type="number" min="0" max="60" step="5"></label>
-    </div>
-    <p class="muted">The cushion stretches every hands-on step for human error (slow chopping, a phone call). "Finish early by" keeps a spare block before serving.</p>
-  </section>
-
-  <section>
-    <h2>Add a dish</h2>
-    <div class="row">
-      <label style="flex:2 1 220px">Dish name<input id="dname" placeholder="e.g. Garlic roast chicken" autocomplete="off"></label>
-      <label style="flex:0 1 110px">Servings<input id="dserv" type="number" min="1" value="8"></label>
-      <button class="pri" id="lookup">Look up steps</button>
-      <button id="pasteBtn">Paste my own steps</button>
-    </div>
-    <div id="pasteBox" class="hide" style="margin-top:12px">
-      <label>Your recipe steps (one per line is easiest)<textarea id="pasteTxt" placeholder="1. Preheat oven to 400F&#10;2. Chop the onions and carrots&#10;3. Roast for 45 minutes"></textarea></label>
-      <div class="row" style="margin-top:8px"><button class="pri" id="curate">Clean up with Thyme</button><button id="rawAdd">Add as is</button></div>
-    </div>
-    <p id="menuMsg" class="muted" role="status"></p>
-    <div class="row"><button id="sampleBtn">Load a sample dinner</button><button id="clearBtn" class="x">Clear all dishes</button></div>
-  </section>
-
+<div id="v-menu" class="screen">
+  <button class="hero" data-open="partySheet" id="hero" aria-label="Change dinner time and kitchen">
+    <svg class="spr" viewBox="0 0 80 80"><path d="M40 70 C39 52 41 38 44 12" fill="none" stroke="#1d3527" stroke-width="3" stroke-linecap="round"/><g fill="#1d3527"><ellipse rx="10" ry="5" transform="translate(30 56) rotate(-35)"/><ellipse rx="10" ry="5" transform="translate(50 50) rotate(35)"/><ellipse rx="9" ry="4.5" transform="translate(31 40) rotate(-40)"/><ellipse rx="9" ry="4.5" transform="translate(50 33) rotate(40)"/><ellipse rx="8" ry="4" transform="translate(36 25) rotate(-45)"/><ellipse rx="8" ry="4" transform="translate(52 18) rotate(45)"/></g></svg>
+    <div class="k">Food on the table at</div><div class="big" id="heroTime">7:00 PM</div><div class="d" id="heroDate"></div>
+    <div class="st" id="heroStats"></div>
+  </button>
+  <div class="stitle" style="margin-top:26px"><h2>Tonight's menu</h2><p id="menuCount"></p></div>
+  <div id="empty" class="empty card"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="#f6dc78"/><path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1d3527" stroke-width="3" stroke-linecap="round"/><g fill="#8fc487" stroke="#1d3527" stroke-width="2"><ellipse rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/><ellipse rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/><ellipse rx="6.5" ry="3.5" transform="translate(44 22) rotate(-80)"/></g></svg>
+    <h3>What are we cooking?</h3><p>Add your dishes and Thyme will plan the whole evening backward from dinner time.</p>
+    <button class="pri big" data-open="addSheet">Add a dish</button><button class="x" id="sampleBtn" style="margin-top:6px">Try a sample dinner</button></div>
   <section id="dishes"></section>
-  <section><details class="pane"><summary><b>Settings: optional AI</b> <span class="muted" id="aiState"></span></summary>
-    <p class="muted">Thyme works without AI: it has built-in recipes and splits and times pasted steps with simple rules. To look up any dish by name and ask free-form questions, add your own Anthropic API key. It is stored only on this device, sent only to Anthropic, and charged to your own account. Thyme's makers never see it.</p>
-    <div class="row"><label style="flex:1 1 240px">Anthropic API key<input id="keyIn" type="password" autocomplete="off" placeholder="sk-ant-…"></label><button class="pri" id="keySave">Save key</button><button id="keyDel">Remove</button></div>
-    <p class="muted" id="keyMsg" role="status"></p></details></section>
-  <section class="row"><button class="grn" data-go="plan">See the plan</button></section>
+  <button class="pri big hide" id="goPlan" data-go="plan" style="margin-top:20px">See my plan</button>
 </div>
 
 <!-- PLAN -->
-<div id="v-plan" class="hide">
+<div id="v-plan" class="screen hide">
+  <div class="stitle"><h2>Your plan</h2><p>Worked out backward from dinner time.</p></div>
   <section id="planTop"></section>
-  <section><h2>Who's on the stove when</h2><p class="muted">Solid bars need your hands. Striped bars run on their own (oven, simmer, rest), so Thyme slots other prep into them.</p><div id="lanes"></div></section>
-  <section><h2>Step by step</h2><ol class="tl" id="tl"></ol></section>
+  <h3 class="sub">Who's busy when</h3><div class="card"><p class="muted" style="margin-bottom:12px">Solid bars need your hands. Striped bars cook on their own, so Thyme slips other prep in.</p><div id="lanes"></div></div>
+  <h3 class="sub">Step by step</h3><ol class="tl" id="tl"></ol>
 </div>
 
 <!-- COOK -->
-<div id="v-cook" class="hide">
-  <div class="cookgrid">
-    <div>
-      <div class="now" id="nowCard"></div>
-      <div class="row" style="margin-top:12px">
-        <button class="pri" id="nextBtn">Done, next step</button>
-        <button id="repeatBtn">Repeat</button>
-        <button id="pauseBtn">Pause</button>
-      </div>
-      <section><h3 style="font-size:18px;margin-bottom:8px">Timers running</h3><div class="timers" id="timers"></div></section>
-      <section><h3 style="font-size:18px;margin-bottom:8px">Coming up</h3><ol class="tl" id="upcoming"></ol></section>
+<div id="v-cook" class="screen hide">
+  <div class="stitle"><h2>Cook</h2><p>Hands-free, one step at a time.</p></div>
+  <div class="now" id="nowCard"></div>
+  <div class="actions"><button class="pri big" id="nextBtn">Done, next step</button><button id="repeatBtn">Repeat</button><button id="pauseBtn">Pause</button></div>
+  <div class="card" style="margin-top:16px">
+    <div class="micRow">
+      <button class="mic" id="micBtn" aria-label="Turn listening on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <div><b id="micState" style="font-size:18px">Listening is off</b><div class="muted" id="micHint">Tap the mic, then say "Okay Thyme, let's begin."</div></div>
     </div>
-    <div>
-      <div class="pane">
-        <div class="row" style="align-items:center;flex-wrap:nowrap">
-          <button class="mic" id="micBtn" aria-label="Turn listening on"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-          <div><b id="micState">Listening is off</b><div class="muted" id="micHint">Tap the mic, then say "Okay Thyme, let's begin."</div></div>
-        </div>
-        <p class="muted" id="partial" style="min-height:1.5em;margin:10px 0 0"></p>
-        <form id="cmdForm" class="row" style="margin-top:6px;flex-wrap:nowrap">
-          <input id="cmd" placeholder='Or type: next, repeat, "how hot is the oven?"' style="flex:1" autocomplete="off">
-          <button>Send</button>
-        </form>
-        <p class="muted" style="margin:8px 0 0">Say: <b>next</b> or <b>done</b>, <b>repeat</b>, <b>what's next</b>, <b>timers</b>, <b>pause</b>. Ask anything about your recipes by starting with "Thyme…".</p>
-      </div>
-      <section><h3 style="font-size:18px;margin-bottom:8px">Conversation</h3><div class="log" id="log" aria-live="polite"></div></section>
-    </div>
+    <p class="muted" id="partial" style="min-height:1.4em;margin-top:8px"></p>
+    <form id="cmdForm"><input id="cmd" placeholder='Type "next", "repeat" or a question' autocomplete="off"><button class="pri">Send</button></form>
+    <details class="help"><summary>What can I say?</summary><p style="margin-top:6px">"Next" or "done", "repeat", "what's next", "timers", "pause" and "resume". Start with "Thyme…" to ask about your recipes.</p></details>
   </div>
+  <h3 class="sub">Timers</h3><div class="timers" id="timers"></div>
+  <h3 class="sub">Coming up</h3><ol class="tl" id="upcoming"></ol>
+  <h3 class="sub">Conversation</h3><div class="card"><div class="log" id="log" aria-live="polite"></div></div>
 </div>
+</main>
 
-</div></main>
+<button class="pri fab" data-open="addSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add dish</button>
+
+<nav aria-label="Main">
+  <button data-view="menu"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>Menu</button>
+  <button data-view="plan"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>Plan</button>
+  <button data-view="cook"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3zM2 11h2M20 11h2M9 4c0 1.5 1.5 1.5 1.5 3M14 4c0 1.5 1.5 1.5 1.5 3"/></svg></span>Cook</button>
+</nav>
+</div>
+<div id="toast" role="status"></div>
+
+<dialog class="sheet" id="addSheet"><div class="grab"></div>
+  <h2>Add a dish</h2>
+  <p class="muted" style="margin-bottom:8px">Tap a favourite</p><div class="chips" id="quick"></div>
+  <div class="grid" style="margin-top:16px"><label class="wide">Or type a dish name<input id="dname" placeholder="e.g. Garlic roast chicken" autocomplete="off"></label>
+    <label>Servings<input id="dserv" type="number" min="1" value="8" inputmode="numeric"></label></div>
+  <div class="row"><button class="pri big" id="lookup">Find the recipe</button></div>
+  <div class="row"><button class="big" id="pasteBtn">Paste my own steps</button></div>
+  <div id="pasteBox" class="hide" style="margin-top:14px">
+    <label>Your recipe, one step per line<textarea id="pasteTxt" placeholder="1. Preheat oven to 400F&#10;2. Chop the onions and carrots&#10;3. Roast for 45 minutes"></textarea></label>
+    <div class="row"><button class="pri" id="curate">Clean up with Thyme</button><button id="rawAdd">Add as is</button></div></div>
+  <p id="menuMsg" class="muted" role="status" style="margin-top:12px"></p>
+  <div class="row"><button class="x" data-close>Close</button></div>
+</dialog>
+
+<dialog class="sheet" id="partySheet"><div class="grab"></div>
+  <h2>Dinner and kitchen</h2>
+  <div class="grid">
+    <label class="wide">Food on the table at<input id="serve" type="datetime-local"></label>
+    <label>Burners<input id="burners" type="number" min="1" max="8" inputmode="numeric"></label>
+    <label>Oven slots<input id="ovens" type="number" min="1" max="4" inputmode="numeric"></label>
+    <label>Extra time for mistakes (%)<input id="buffer" type="number" min="0" max="100" step="5" inputmode="numeric"></label>
+    <label>Finish early by (min)<input id="tail" type="number" min="0" max="60" step="5" inputmode="numeric"></label>
+  </div>
+  <p class="muted" style="margin-top:12px">Extra time stretches every hands-on step for slow chopping or a phone call. Finishing early leaves a spare block before serving.</p>
+  <div class="row" style="margin-top:14px"><button class="pri big" data-close>Done</button></div>
+</dialog>
+
+<dialog class="sheet" id="settingsSheet"><div class="grab"></div>
+  <h2>Settings</h2>
+  <section><h3 style="font-size:17px;font-weight:800">Optional AI <span class="muted" id="aiState"></span></h3>
+    <p class="muted" style="margin:6px 0 12px">Thyme works without AI, using built-in recipes. To look up any dish and ask free-form questions, add your own Anthropic API key. It stays on this device, goes only to Anthropic, and is charged to your own account.</p>
+    <label>Anthropic API key<input id="keyIn" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
+    <div class="row" style="margin-top:10px"><button class="pri" id="keySave">Save key</button><button id="keyDel">Remove</button></div>
+    <p class="muted" id="keyMsg" role="status" style="margin-top:8px"></p></section>
+  <section><button class="x" id="clearBtn">Clear all dishes</button></section>
+  <div class="row"><button class="big" data-close>Close</button></div>
+</dialog>
 
 <script>
 {
@@ -262,7 +304,7 @@ const color=d=>COLORS[state.dishes.indexOf(d)%COLORS.length];
 
 /* ---------- views ---------- */
 const VIEWS=['menu','plan','cook'];
-function show(v){if(!VIEWS.includes(v))v='menu';VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hide',x!==v));
+function show(v){if(!VIEWS.includes(v))v='menu';document.body.dataset.view=v;scrollTo(0,0);VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hide',x!==v));
   document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===v));
   if(v==='plan')renderPlan();if(v==='cook')renderCook();if(v==='menu')renderMenu()}
 $('#keySave').addEventListener('click',()=>{const v=$('#keyIn').value.trim();if(!/^sk-ant-/.test(v)){$('#keyMsg').textContent='That does not look like an Anthropic key (it starts with sk-ant-).';return}try{localStorage.setItem(KEY,v)}catch(e){}$('#keyIn').value='';refreshAI();$('#keyMsg').textContent='Saved on this device.'});
@@ -273,29 +315,44 @@ addEventListener('hashchange',()=>show(location.hash.slice(1)));
 
 /* ---------- menu ---------- */
 const cfgIds=['serve','burners','ovens','buffer','tail'];
-cfgIds.forEach(k=>{const el=$('#'+k);el.value=state.cfg[k];el.addEventListener('change',()=>{state.cfg[k]=k==='serve'?el.value:Math.max(0,+el.value||0);save()})});
-const msg=t=>{$('#menuMsg').textContent=t};
+cfgIds.forEach(k=>{const el=$('#'+k);el.value=state.cfg[k];el.addEventListener('change',()=>{state.cfg[k]=k==='serve'?el.value:Math.max(0,+el.value||0);save();renderHero()})});
+let toastT;const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),3200)};
+const msg=t=>{$('#menuMsg').textContent=t;toast(t)};
 const fmtT=ms=>new Date(ms).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 const fmtD=m=>m>=60?`${Math.floor(m/60)}h ${m%60?m%60+'m':''}`.trim():`${m} min`;
 
+const dishMin=d=>d.steps.reduce((a,x)=>a+x.min,0);
+function renderHero(){const d=new Date(state.cfg.serve);if(isNaN(d))return;$('#heroTime').textContent=fmtT(d.getTime());
+  $('#heroDate').textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+  const n=state.dishes.length,st=state.dishes.reduce((a,x)=>a+x.steps.length,0);
+  $('#heroStats').innerHTML=`<span class="pill">${n} ${n===1?'dish':'dishes'}</span><span class="pill">${esc(state.cfg.burners)} burners</span><span class="pill">${esc(state.cfg.ovens)} oven${+state.cfg.ovens===1?'':'s'}</span>`}
+let lastCount=0;
 function renderMenu(){
-  const box=$('#dishes');
-  if(!state.dishes.length){box.innerHTML='<p class="muted">No dishes yet. Type a dish name above, paste your own recipe, or load the sample dinner to try it out.</p>';return}
-  box.innerHTML='<h2>Your menu</h2>'+state.dishes.map(d=>`
-  <article class="dish" style="--c:${color(d)}" data-dish="${d.id}">
-    <header><h3>${esc(d.name)}</h3><span class="muted">${esc(d.servings)} servings · ${d.steps.length} steps</span><button class="x" data-act="deldish" aria-label="Remove dish">Remove</button></header>
+  renderHero();const box=$('#dishes'),n=state.dishes.length;
+  const open=new Set([...box.querySelectorAll('details.dish[open]')].map(x=>x.dataset.dish));
+  if(n>lastCount&&n>0){open.add(state.dishes[n-1].id);if($('#addSheet').open)$('#addSheet').close()}
+  lastCount=n;
+  $('#empty').classList.toggle('hide',n>0);$('#goPlan').classList.toggle('hide',n===0);
+  $('#menuCount').textContent=n?`${n} ${n===1?'dish':'dishes'}, ${state.dishes.reduce((a,x)=>a+x.steps.length,0)} steps in all`:'';
+  box.innerHTML=state.dishes.map(d=>`
+  <details class="dish" style="--c:${color(d)}" data-dish="${d.id}"${open.has(d.id)?' open':''}>
+    <summary><span class="av">${esc((d.name||'?').trim().charAt(0).toUpperCase())}</span><div><h3>${esc(d.name)}</h3><div class="sm">${esc(d.servings)} servings · ${d.steps.length} steps · ${fmtD(dishMin(d))}</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
+    <div class="dbody">
     ${(d.notes||[]).map(n=>`<div class="note">${esc(n)}</div>`).join('')}
-    ${d.ing&&d.ing.length?`<details style="margin-top:8px"><summary class="muted">Ingredients (${d.ing.length})</summary><ul>${d.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></details>`:''}
-    <table class="steps"><tbody>${d.steps.map((s,i)=>`<tr data-step="${s.id}">
-      <td>${i+1}</td>
-      <td><input class="t" data-f="text" value="${esc(s.text)}" aria-label="Step ${i+1}"></td>
-      <td><input class="m" type="number" min="1" data-f="min" value="${esc(s.min)}" aria-label="Minutes"> <span class="muted">min</span></td>
-      <td><select data-f="kind" aria-label="Hands-on or hands-off"><option value="active"${s.kind==='active'?' selected':''}>Hands-on</option><option value="passive"${s.kind==='passive'?' selected':''}>Hands-off</option></select></td>
-      <td><select data-f="equip" aria-label="Equipment"><option value="none">No equipment</option><option value="burner"${s.equip==='burner'?' selected':''}>Burner</option><option value="oven"${s.equip==='oven'?' selected':''}>Oven</option></select></td>
-      <td><button class="x" data-act="up" aria-label="Move up">↑</button><button class="x" data-act="delstep" aria-label="Delete step">✕</button></td></tr>`).join('')}</tbody></table>
-    <button class="x" data-act="addstep">+ Add a step</button>
-  </article>`).join('');
+    ${d.ing&&d.ing.length?`<details style="margin:8px 0"><summary class="muted" style="cursor:pointer;font-weight:800">Ingredients (${d.ing.length})</summary><ul style="margin:8px 0">${d.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></details>`:''}
+    ${d.steps.map((s,i)=>`<div class="step" data-step="${s.id}"><div class="top"><span class="n">${i+1}</span><textarea data-f="text" rows="2" aria-label="Step ${i+1}">${esc(s.text)}</textarea></div>
+      <div class="ctl"><input type="number" min="1" data-f="min" value="${esc(s.min)}" aria-label="Minutes" inputmode="numeric"><span class="muted">min</span>
+      <select data-f="kind" aria-label="Hands-on or hands-off"><option value="active"${s.kind==='active'?' selected':''}>Hands-on</option><option value="passive"${s.kind==='passive'?' selected':''}>Hands-off</option></select>
+      <select data-f="equip" aria-label="Equipment"><option value="none">No equipment</option><option value="burner"${s.equip==='burner'?' selected':''}>Burner</option><option value="oven"${s.equip==='oven'?' selected':''}>Oven</option></select>
+      <button class="x" data-act="up" aria-label="Move up">↑</button><button class="x" data-act="delstep" aria-label="Delete step">✕</button></div></div>`).join('')}
+    <div class="row" style="margin-top:10px"><button class="sage" data-act="addstep">+ Add a step</button><button class="x" data-act="deldish">Remove dish</button></div>
+    </div></details>`).join('');
 }
+$('#quick').innerHTML=Object.keys(LIB).map(k=>`<button data-lib="${esc(k)}">${esc(k.replace(/\b\w/g,c=>c.toUpperCase()))}</button>`).join('');
+$('#quick').addEventListener('click',e=>{const k=e.target.dataset.lib;if(!k)return;const d=fromLib(k,Math.max(1,+$('#dserv').value||8));state.dishes.push(d);save();renderMenu();toast('Added '+d.name)});
+document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{const d=document.getElementById(b.dataset.open);if(!d.open)d.showModal()}));
+document.querySelectorAll('dialog.sheet').forEach(d=>{d.addEventListener('click',e=>{if(e.target===d||e.target.hasAttribute('data-close'))d.close()})});
 $('#dishes').addEventListener('change',e=>{const f=e.target.dataset.f;if(!f)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
   const s=d.steps.find(x=>x.id===e.target.closest('[data-step]').dataset.step);s[f]=f==='min'?Math.max(1,Math.round(+e.target.value||1)):e.target.value;save()});
 $('#dishes').addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
@@ -377,20 +434,20 @@ function plan(){
 
 function renderPlan(){
   const p=plan();
-  if(!p.tasks.length){$('#planTop').innerHTML='<p class="muted">Add at least one dish on the Menu first.</p>';$('#lanes').innerHTML='';$('#tl').innerHTML='';return}
+  if(!p.tasks.length){$('#planTop').innerHTML='<div class="card empty"><h3>No dishes yet</h3><p>Add a dish on the Menu to see your plan.</p><button class="pri" onclick="location.hash=\'menu\'">Go to Menu</button></div>';$('#lanes').innerHTML='';$('#tl').innerHTML='';return}
   const late=p.start<Date.now();
-  $('#planTop').innerHTML=`<div class="pane"><p class="muted" style="margin:0">Start cooking at</p><div class="big">${fmtT(p.start)}</div>
-   <p style="margin:8px 0 0">${fmtD(p.total)} in the kitchen, ${fmtD(p.hands)} of it hands-on. Everything is ready by <b>${fmtT(p.end)}</b>, with ${esc(state.cfg.tail)} spare minutes before serving at <b>${fmtT(p.serve)}</b>.
-   Cooking one dish after another would take ${fmtD(p.serial)}; interleaving saves ${fmtD(Math.max(0,p.serial-p.total))}.</p>
-   ${late?`<div class="note">That start time has already passed. When you say "Okay Thyme, let's begin", Thyme shifts the plan to start right then and tells you the new finish time.</div>`:''}
-   <div class="row" style="margin-top:12px"><button class="pri" data-go2="cook">Go to Cook mode</button></div></div>`;
+  $('#planTop').innerHTML=`<div class="hero" style="cursor:default"><div class="k">Start cooking at</div><div class="big">${fmtT(p.start)}</div><div class="d">Dinner is served at ${fmtT(p.serve)}</div>
+   <p style="margin-top:10px;font-weight:600">Everything is ready by ${fmtT(p.end)}, with ${esc(state.cfg.tail)} spare minutes.</p></div>
+   <div class="stats"><div class="stat"><b>${fmtD(p.total)}</b><span>in the kitchen</span></div><div class="stat"><b>${fmtD(p.hands)}</b><span>hands-on</span></div><div class="stat"><b>${fmtD(Math.max(0,p.serial-p.total))}</b><span>saved by overlapping</span></div></div>
+   ${late?`<div class="note" style="margin-top:12px">That start time has passed. When you say "Okay Thyme, let's begin", Thyme shifts the plan to start right then and tells you the new finish time.</div>`:''}
+   <button class="pri big" data-go2="cook" style="margin-top:14px">Start cooking</button>`;
   $('#planTop').querySelector('[data-go2]').addEventListener('click',()=>location.hash='cook');
   const span=p.end-p.start;
   const ds=state.dishes.filter(d=>d.steps.length);
   $('#lanes').innerHTML=`<div class="lanes">${ds.map(d=>`<div class="lane" style="--c:${color(d)}"><span class="chip" style="--c:${color(d)}">${esc(d.name)}</span><div class="track">${
     p.tasks.filter(t=>t.d===d.id).map(t=>`<div class="bar ${t.s.kind==='passive'?'p':''}" style="left:${(t.start-p.start)/span*100}%;width:${Math.max(.6,(t.end-t.start)/span*100)}%" title="${esc(fmtT(t.start)+' '+t.s.text)}"></div>`).join('')}</div></div>`).join('')}</div>
     <div class="axis"><span>${fmtT(p.start)}</span><span>${fmtT(p.start+span/2)}</span><span>${fmtT(p.end)}</span></div>`;
-  $('#tl').innerHTML=p.tasks.map(t=>`<li><time>${fmtT(t.start)}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span>
+  $('#tl').innerHTML=p.tasks.map(t=>`<li style="--c:${color(t.dish)}"><time>${fmtT(t.start)}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span>
     <span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Hands-off'}</span><span class="tag">${fmtD(t.dur)}</span>${t.s.equip!=='none'?`<span class="tag">${t.s.equip==='oven'?'Oven':'Burner'}</span>`:''}</div></div></li>`).join('');
 }
 
@@ -533,22 +590,23 @@ async function ask(q){
 /* ---------- cook view ---------- */
 function renderCook(){
   const now=Date.now();
-  if(!run){$('#nowCard').innerHTML=`<p class="muted" style="margin:0">Ready when you are</p><div class="big" style="margin:6px 0 10px">"Okay Thyme, let's begin."</div>
-     <p style="margin:0 0 14px">Tap the mic and say it, or press the button. Thyme reads each step aloud, starts its timer, and speaks up when a timer starts or ends.</p><button class="pri" id="beginBtn">Let's begin</button>`;
+  document.querySelector('.actions').classList.toggle('hide',!run);
+  if(!run){$('#nowCard').innerHTML=`<p class="muted" style="margin:0;font-weight:700">Ready when you are</p><div class="txt" style="font-size:28px;font-weight:900;margin:8px 0 10px">"Okay Thyme, let's begin."</div>
+     <p style="margin:0 0 14px">Tap the mic and say it, or press the button. Thyme reads each step aloud, starts its timer, and speaks up when a timer starts or ends.</p><button class="pri big" id="beginBtn">Let's begin</button>`;
     $('#beginBtn').addEventListener('click',()=>{addLog('you','Okay Thyme, let\'s begin.');begin()});
     const p=plan();$('#timers').innerHTML='<p class="muted">No timers yet.</p>';
-    $('#upcoming').innerHTML=p.tasks.slice(0,5).map(t=>`<li><time>${fmtT(t.start)}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span></div></div></li>`).join('')||'<p class="muted">Add dishes on the Menu first.</p>';
+    $('#upcoming').innerHTML=p.tasks.slice(0,5).map(t=>`<li style="--c:${color(t.dish)}"><time>${fmtT(t.start)}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span></div></div></li>`).join('')||'<p class="muted">Add dishes on the Menu first.</p>';
     return}
   const c=chefStep();
-  if(run.done)$('#nowCard').innerHTML='<div class="big">All done. Enjoy the party!</div>';
-  else if(c){const left=c.dueAt-now;$('#nowCard').innerHTML=`<span class="chip" style="--c:${color(c.dish)}">${esc(c.dish.name)}</span>
-     <div style="font-size:22px;font-weight:600;margin:10px 0">${esc(c.s.text)}</div><div class="count ${left<0?'over':''}">${mmss(left)}</div>
+  if(run.done)$('#nowCard').innerHTML='<div class="txt" style="font-size:30px;font-weight:900">All done. Enjoy the party!</div>';
+  else if(c){const left=c.dueAt-now;$('#nowCard').innerHTML=`<span class="pill"><span class="chip" style="--c:${color(c.dish)}">${esc(c.dish.name)}</span></span>
+     <div class="txt">${esc(c.s.text)}</div><div class="count ${left<0?'over':''}">${mmss(left)}</div>
      <p class="muted" style="margin:6px 0 0">${left<0?'Over the planned time. Say "next" when finished.':'Hands-on. Say "next" when you finish early.'}${run.paused?' Paused.':''}</p>`}
   else{const up=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b))[0];
-    $('#nowCard').innerHTML=`<p class="muted" style="margin:0">Your hands are free${run.paused?' (paused)':''}</p>${up?`<div style="font-size:20px;font-weight:600;margin:8px 0">Next at ${fmtT(Math.max(now,sched(up)))}: ${esc(up.dish.name)}</div><div>${esc(up.s.text)}</div><div class="count" style="margin-top:8px">${mmss(Math.max(0,sched(up)-now))}</div><p class="muted" style="margin:6px 0 0">Say "next" to start early.</p>`:'<div class="big">Waiting on timers</div>'}`}
+    $('#nowCard').innerHTML=`<p class="muted" style="margin:0">Your hands are free${run.paused?' (paused)':''}</p>${up?`<div class="txt">Next at ${fmtT(Math.max(now,sched(up)))}: ${esc(up.dish.name)}</div><div>${esc(up.s.text)}</div><div class="count" style="margin-top:8px">${mmss(Math.max(0,sched(up)-now))}</div><p class="muted" style="margin:6px 0 0">Say "next" to start early.</p>`:'<div class="txt" style="font-size:26px;font-weight:900">Waiting on timers</div>'}`}
   const r=S().filter(t=>t.state==='running'&&t.s.kind==='passive');
   $('#timers').innerHTML=r.length?r.map(t=>`<div class="timer"><div><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><div class="muted">${esc(t.s.text)}</div></div><b>${mmss(t.dueAt-now)}</b></div>`).join(''):'<p class="muted">No timers running.</p>';
-  $('#upcoming').innerHTML=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b)).slice(0,5).map(t=>`<li><time>${fmtT(Math.max(now,sched(t)))}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Timer'}</span><span class="tag">${fmtD(t.dur)}</span></div></div></li>`).join('')||'<p class="muted">Nothing left.</p>';
+  $('#upcoming').innerHTML=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b)).slice(0,5).map(t=>`<li style="--c:${color(t.dish)}"><time>${fmtT(Math.max(now,sched(t)))}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Timer'}</span><span class="tag">${fmtD(t.dur)}</span></div></div></li>`).join('')||'<p class="muted">Nothing left.</p>';
   $('#pauseBtn').textContent=run.paused?'Resume':'Pause';
 }
 $('#nextBtn').addEventListener('click',()=>{unlockAudio();addLog('you','Next');next()});
