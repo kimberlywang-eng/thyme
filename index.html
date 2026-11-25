@@ -168,7 +168,8 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 <div id="v-cook" class="screen hide">
   <div class="stitle"><h2>Cook</h2><p>Hands-free, one step at a time.</p></div>
   <div class="now" id="nowCard"></div>
-  <div class="actions"><button class="pri big" id="nextBtn">Done, next step</button><button id="repeatBtn">Repeat</button><button id="pauseBtn">Pause</button></div>
+  <div class="actions"><button class="pri big" id="nextBtn">Done, next step</button><button id="repeatBtn">Repeat</button><button id="pauseBtn">Mute voice</button></div>
+  <p class="muted" style="text-align:center;margin-top:10px">Timers keep running no matter what, because your food does.</p>
   <div class="card" style="margin-top:16px">
     <div class="micRow">
       <button class="mic" id="micBtn" aria-label="Turn listening on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
@@ -176,7 +177,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
     </div>
     <p class="muted" id="partial" style="min-height:1.4em;margin-top:8px"></p>
     <form id="cmdForm"><input id="cmd" placeholder='Type "next", "repeat" or a question' autocomplete="off"><button class="pri">Send</button></form>
-    <details class="help"><summary>What can I say?</summary><p style="margin-top:6px">"Next" or "done", "repeat", "what's next", "timers", "pause" and "resume". Start with "Thyme…" to ask about your recipes.</p></details>
+    <details class="help"><summary>What can I say?</summary><p style="margin-top:6px">"Next" or "done", "repeat", "what's next", "timers", "mute" and "unmute". Start with "Thyme…" to ask about your recipes.</p></details>
   </div>
   <h3 class="sub">Timers</h3><div class="timers" id="timers"></div>
   <h3 class="sub">Coming up</h3><ol class="tl" id="upcoming"></ol>
@@ -223,6 +224,11 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 
 <dialog class="sheet" id="settingsSheet"><div class="grab"></div>
   <h2>Settings</h2>
+  <section style="margin-bottom:22px"><h3 style="font-size:17px;font-weight:800">Voice</h3>
+    <p class="muted" style="margin:6px 0 12px">Thyme uses the voices already on your device. If it sounds robotic, pick another one, and for the most natural sound install an "enhanced" or "premium" voice in your phone's accessibility settings.</p>
+    <label>Voice<select id="voiceSel"></select></label>
+    <label style="margin-top:10px">Speed<input id="rateIn" type="range" min="0.8" max="1.25" step="0.01"></label>
+    <div class="row" style="margin-top:10px"><button class="sage" id="voiceTest">Hear it</button></div></section>
   <section><h3 style="font-size:17px;font-weight:800">Optional AI <span class="muted" id="aiState"></span></h3>
     <p class="muted" style="margin:6px 0 12px">Thyme works without AI, using built-in recipes. To look up any dish and ask free-form questions, add your own Anthropic API key. It stays on this device, goes only to Anthropic, and is charged to your own account.</p>
     <label>Anthropic API key<input id="keyIn" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
@@ -452,13 +458,49 @@ function renderPlan(){
 }
 
 /* ---------- speech out ---------- */
-let speaking=false,lastSpokeEnd=0,lastSpoken='',actx=null;
-function chime(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const t=actx.currentTime;[880,1320].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.0001,t+i*.18);g.gain.exponentialRampToValueAtTime(.3,t+i*.18+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.18+.35);o.start(t+i*.18);o.stop(t+i*.18+.4)})}catch(e){}}
+let speaking=false,lastSpokeEnd=0,lastSpoken='',actx=null,chimeEl=null,silentEl=null;
+/* small audio helpers: a soft bell and a silent loop, built in code so there are no extra files */
+function wavURL(samples,rate){const n=samples.length,b=new ArrayBuffer(44+n*2),v=new DataView(b);const w=(o,t)=>[...t].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,samples[i]))*32767,true);return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
+function bellSamples(){const R=22050,out=new Float32Array(R*1.6);[[784,0],[988,.16],[1175,.32]].forEach(([f,t0])=>{for(let i=Math.floor(t0*R);i<out.length;i++){const t=i/R-t0;out[i]+=Math.sin(2*Math.PI*f*t)*Math.exp(-t*4.2)*.28+Math.sin(2*Math.PI*f*2.01*t)*Math.exp(-t*9)*.06}});return out}
+function chime(){try{if(!chimeEl){chimeEl=new Audio(wavURL(bellSamples(),22050));chimeEl.onended=()=>{if(silentEl)silentEl.play().catch(()=>{})}}chimeEl.currentTime=0;const pr=chimeEl.play();if(pr)pr.catch(webChime)}catch(e){webChime()}}
+function webChime(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const t=actx.currentTime;[784,988,1175].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.0001,t+i*.16);g.gain.exponentialRampToValueAtTime(.25,t+i*.16+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.16+.9);o.start(t+i*.16);o.stop(t+i*.16+1)})}catch(e){}}
+
+/* a friendlier voice: pick the most natural voice on this device, read in short phrases, say "degrees" not "°F" */
+let voices=[],voicePref={name:'',rate:.97};try{Object.assign(voicePref,JSON.parse(localStorage.getItem('thyme.voice')||'{}'))}catch(e){}
+function scoreVoice(v){const n=v.name;let sc=0;
+  if(/natural|neural|online/i.test(n))sc+=60;if(/premium|enhanced/i.test(n))sc+=45;if(/^google/i.test(n))sc+=30;
+  if(/\b(ava|samantha|allison|serena|zoe|nicky|jenny|aria|sonia|libby|emma|karen|moira|tessa|susan|catherine)\b/i.test(n))sc+=28;
+  if(/en[-_](US|GB|AU|CA|IE)/i.test(v.lang))sc+=8;if(!v.localService)sc+=4;
+  if(/\b(fred|albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|junior|kathy|organ|ralph|superstar|trinoids|whisper|zarvox|espeak|compact)\b/i.test(n))sc-=80;
+  if(/\b(david|mark|zira|george|hazel)\b/i.test(n)&&/microsoft/i.test(n)&&!/online|natural/i.test(n))sc-=15;
+  if(/male$|\bdaniel\b|\bgordon\b|\barthur\b/i.test(n))sc-=3;return sc}
+function loadVoices(){if(!('speechSynthesis' in window)||!speechSynthesis.getVoices)return;voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>scoreVoice(b)-scoreVoice(a));
+  const sel=document.getElementById('voiceSel');if(!sel)return;
+  sel.innerHTML=`<option value="">Best on this device${voices[0]?' ('+esc(voices[0].name)+')':''}</option>`+voices.map(v=>`<option value="${esc(v.name)}"${v.name===voicePref.name?' selected':''}>${esc(v.name)}</option>`).join('');}
+const curVoice=()=>voices.find(v=>v.name===voicePref.name)||voices[0]||null;
+if('speechSynthesis' in window){loadVoices();speechSynthesis.addEventListener&&speechSynthesis.addEventListener('voiceschanged',loadVoices)}
+const saveVoice=()=>{try{localStorage.setItem('thyme.voice',JSON.stringify(voicePref))}catch(e){}};
+function speechify(t){return String(t).replace(/(\d+)\s*°\s*F/g,'$1 degrees').replace(/°\s*F/g,' degrees').replace(/\btbsp\b/gi,'tablespoons').replace(/\btsp\b/gi,'teaspoons').replace(/\blbs?\b/gi,'pounds').replace(/\boz\b/gi,'ounces')
+  .replace(/\b1\/2\b/g,'half').replace(/\b1\/4\b/g,'a quarter').replace(/\b3\/4\b/g,'three quarters').replace(/(\d+)h\s*(\d+)m\b/g,'$1 hours $2 minutes').replace(/\b(\d+)h\b/g,'$1 hours').replace(/\b1 hours\b/g,'1 hour')
+  .replace(/(\d+)\s*min\b/g,'$1 minutes').replace(/\b(\d+)m\b/g,'$1 minutes').replace(/\b1 minutes\b/g,'1 minute').replace(/:\s/g,'. ')}
+function speak(text,delay=0){
+  if(!('speechSynthesis' in window))return;
+  const parts=(speechify(text).match(/[^.!?]+[.!?]*/g)||[text]).map(x=>x.trim()).filter(Boolean);
+  const chunks=[];parts.forEach(x=>{const l=chunks[chunks.length-1];if(l&&l.length+x.length<90)chunks[chunks.length-1]=l+' '+x;else chunks.push(x)});
+  setTimeout(()=>{if(run&&run.muted)return;const v=curVoice();
+    chunks.forEach(c=>{const u=new SpeechSynthesisUtterance(c);if(v){u.voice=v;u.lang=v.lang}u.rate=voicePref.rate;u.pitch=1.04;
+      u.onstart=()=>{speaking=true};u.onend=u.onerror=()=>{speaking=false;lastSpokeEnd=Date.now()};speechSynthesis.speak(u)})},delay)}
+function notifyBg(text){
+  if(!document.hidden||!('Notification' in window)||Notification.permission!=='granted'||!navigator.serviceWorker)return;
+  navigator.serviceWorker.ready.then(r=>r.showNotification('Thyme',{body:text,icon:'icons/icon-192.png',badge:'icons/icon-192.png',tag:'thyme-step',renotify:true,vibrate:[200,100,200],actions:[{action:'next',title:'Done, next step'},{action:'repeat',title:'Repeat'}]})).catch(()=>{})}
 function say(text,{beep=false,instr=false}={}){
   addLog('th',text);if(instr&&run)run.last=text;lastSpoken=text.toLowerCase();
-  if(beep)chime();
-  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(text);u.rate=1;u.onstart=()=>{speaking=true};u.onend=u.onerror=()=>{speaking=false;lastSpokeEnd=Date.now()};
-    setTimeout(()=>speechSynthesis.speak(u),beep?650:0)}
+  if(beep){chime();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+  notifyBg(text);
+  if(run&&run.muted)return;
+  speak(text,beep?1100:0);
 }
 function addLog(cls,text){const el=document.createElement('div');el.className=cls;el.textContent=text;const L=$('#log');L.appendChild(el);while(L.children.length>60)L.firstChild.remove();L.scrollTop=L.scrollHeight}
 
@@ -503,13 +545,38 @@ function heard(raw,typed){
   if(/^(repeat|repeat that|say (that|it) again|again|come again|what did you say|pardon)$/.test(c)){repeat();return}
   if(/^(what'?s next|what is next|what'?s coming( up)?|what do i do( now| next)?|what now)$/.test(c)){whatsNext();return}
   if(/^(timers?|check (the )?timers?|time left|how much time( is)? left|how long is left)$/.test(c)){timers();return}
-  if(/^(pause|hold on|wait)$/.test(c)){pause(true);return}
-  if(/^(resume|continue|unpause|keep going)$/.test(c)){pause(false);return}
+  if(/^(pause|hold on|wait|mute|quiet|be quiet|shh+|silence)$/.test(c)){pause(true);return}
+  if(/^(resume|continue|unpause|keep going|unmute|talk to me|you can talk)$/.test(c)){pause(false);return}
   if(/^(start now|begin now|start early)$/.test(c)){startNow();return}
   if(/^(stop listening|go to sleep)$/.test(c)){$('#micBtn').click();return}
   if(wake||typed){if(c.length<3){say('Yes? Ask me about your recipe, or say next.');return}ask(c);return}
   const last=$('#log').lastChild;if(last){last.className='ig';last.textContent=raw+' (start with "Thyme…" to ask me)'}
 }
+
+/* ---------- lock-screen controls and background alerts ---------- */
+let sessKey='',sessAt=0;
+function startSession(){
+  try{if(!silentEl){silentEl=new Audio(wavURL(new Float32Array(16000),8000));silentEl.loop=true;silentEl.volume=.02}silentEl.play().catch(()=>{})}catch(e){}
+  if(!('mediaSession' in navigator))return;const ms=navigator.mediaSession,h=(a,f)=>{try{ms.setActionHandler(a,f)}catch(e){}};
+  h('nexttrack',()=>next());h('previoustrack',()=>repeat());h('pause',()=>pause(true));h('play',()=>pause(false));
+  sessKey='';updateSession(true);
+}
+function updateSession(force){
+  if(!run||!('mediaSession' in navigator)||typeof MediaMetadata==='undefined')return;
+  const ms=navigator.mediaSession,now=Date.now(),St=S(),c=chefStep();
+  const p=c||St.filter(t=>t.state==='running').sort((a,b)=>a.dueAt-b.dueAt)[0]||null;
+  const key=(p?p.d+p.i:'none')+(run.muted?'m':'')+(run.done?'d':'');
+  if(key===sessKey&&!force&&now-sessAt<30000)return;sessKey=key;sessAt=now;
+  const n=St.filter(t=>t.state==='running').length;let title,artist;
+  if(run.done){title='All done. Enjoy the party!';artist='Thyme'}
+  else if(p){title=(p.s.kind==='active'?'Now: ':'Timer: ')+p.s.text;artist=p.dish.name+(n>1?` · ${n} timers running`:'')}
+  else{const up=St.filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b))[0];title=up?`Next at ${fmtT(Math.max(now,sched(up)))}: ${up.s.text}`:'Waiting on timers';artist=up?up.dish.name:'Thyme'}
+  try{ms.metadata=new MediaMetadata({title,artist,album:'Thyme · voice '+(run.muted?'muted':'on'),artwork:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]});
+    ms.playbackState=run.muted?'paused':'playing';
+    if(ms.setPositionState){if(p&&!run.done){const dur=p.dur*60;ms.setPositionState({duration:dur,position:Math.max(0,Math.min(dur,(now-p.startedAt)/1000)),playbackRate:1})}else ms.setPositionState()}}catch(e){}
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{const d=e.data;if(d&&d.type==='act'){if(d.action==='next')next();else if(d.action==='repeat')repeat()}});
+document.addEventListener('visibilitychange',()=>{if(run&&!document.hidden){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}});
 
 /* ---------- cooking runtime ---------- */
 let run=null,ticker=null;
@@ -524,12 +591,13 @@ const mmss=ms=>{const neg=ms<0;ms=Math.abs(ms);const s=Math.round(ms/1000),h=Mat
 function begin(){
   unlockAudio();
   const p=plan();if(!p.tasks.length){say('Add a dish on the menu first, then we can begin.');return}
-  run={steps:p.tasks.map(t=>({...t,state:'pending'})),offset:0,paused:false,last:'',planStart:p.start,end:p.end,done:false};
+  run={steps:p.tasks.map(t=>({...t,state:'pending'})),offset:0,muted:false,last:'',planStart:p.start,end:p.end,done:false};
   const now=Date.now();
   if(p.start>now+60000){say(`Okay, let's do this. Your first step is at ${fmtT(p.start)}, and I'll call you then. Say "Thyme, start now" to begin early.`,{instr:true})}
   else{run.offset=now-p.start;const lateMin=Math.round(run.offset/60000);
     say(lateMin>1?`Okay, let's begin. We're starting ${fmtD(lateMin)} after the plan, so food will be ready around ${fmtT(p.end+run.offset)}.`:`Okay, let's begin. Food will be ready around ${fmtT(p.end)}.`)}
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
+  startSession();try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
   clearInterval(ticker);ticker=setInterval(tick,1000);if(location.hash!=='#cook')location.hash='cook';tick();
 }
 function startNow(){if(!run){begin();return}run.offset=Date.now()-run.planStart;say(`Starting now. Food will be ready around ${fmtT(run.end+run.offset)}.`);tick()}
@@ -540,7 +608,7 @@ function startStep(t,prefix=''){
 }
 function tick(){
   if(!run){renderCook();return}
-  if(run.paused||run.done){renderCook();return}
+  if(run.done){renderCook();updateSession();return}
   const now=Date.now(),St=S();
   for(const t of St)if(t.state==='running'&&!t.alerted&&now>=t.dueAt){t.alerted=true;
     if(t.s.kind==='passive'){t.state='done';say(`Timer done. ${t.dish.name}: ${t.s.text.replace(/\.$/,'')} is finished.`,{beep:true})}
@@ -549,11 +617,10 @@ function tick(){
   if(!chefStep()){const c=St.filter(t=>t.state==='pending'&&t.s.kind==='active'&&depDone(t)&&now>=sched(t)&&eqFree(t)).sort((a,b)=>sched(a)-sched(b))[0];if(c)startStep(c)}
   else for(const t of St)if(t.state==='pending'&&t.s.kind==='active'&&!t.warned&&depDone(t)&&now>=sched(t)+60000){t.warned=true;say(`Heads up: ${t.dish.name} is waiting on you. Say "next" when you finish this step.`)}
   if(St.every(t=>t.state==='done')){run.done=true;say('That is everything. Food is ready. Enjoy your party!',{beep:true})}
-  renderCook();
+  renderCook();updateSession();
 }
 function next(){
   if(!run){say('Say "Okay Thyme, let\'s begin" to start cooking.');return}
-  if(run.paused)pause(false);
   const now=Date.now(),c=chefStep();if(c)c.state='done';
   // pull ahead only steps due within 15 min, so prepped food doesn't sit for an hour
   const cand=S().filter(t=>t.state==='pending'&&t.s.kind==='active'&&depDone(t)&&eqFree(t)&&sched(t)<=now+15*60000).sort((a,b)=>sched(a)-sched(b))[0];
@@ -570,9 +637,10 @@ function whatsNext(){if(!run){say('We haven\'t started. Say "Okay Thyme, let\'s 
   say((c?`You're on ${c.dish.name}: ${c.s.text} `:'')+(up.length?'After that: '+up.map(t=>`${t.dish.name}, ${t.s.text}`).join(' Then ')  :'Nothing else is left.'))}
 function timers(){const r=S().filter(t=>t.state==='running');if(!r.length){say('No timers running.');return}
   say(r.map(t=>{const m=Math.round((t.dueAt-Date.now())/60000);return `${t.dish.name}, ${m>0?m+' minutes left':'time is up'}`}).join('. ')+'.')}
-function pause(on){if(!run)return;if(on&&!run.paused){run.paused=true;run.pausedAt=Date.now();say('Paused. Timers are held. Say "resume" when you are back.')}
-  else if(!on&&run.paused){const d=Date.now()-run.pausedAt;run.offset+=d;S().forEach(t=>{if(t.state==='running')t.dueAt+=d});run.paused=false;say(`Resuming. The plan moved back ${fmtD(Math.round(d/60000))}.`)}
-  renderCook()}
+function pause(on){if(!run)return;on=!!on;if(on===!!run.muted)return;run.muted=on;
+  if(on){try{speechSynthesis.cancel()}catch(e){}addLog('th','Voice muted. Your timers are still running.');toast('Voice muted. Timers keep running.')}
+  else say('Voice is back on.');
+  if(silentEl)silentEl.play().catch(()=>{});updateSession(true);renderCook()}
 
 /* ---------- questions: answered only from the recipes on hand ---------- */
 function recipeText(){return state.dishes.map(d=>`## ${d.name} (${d.servings} servings)\nIngredients: ${(d.ing||[]).join('; ')||'not listed'}\n`+d.steps.map((s,i)=>`${i+1}. ${s.text} [${s.min} min, ${s.kind==='active'?'hands-on':'hands-off'}${s.equip!=='none'?', '+s.equip:''}]`).join('\n')).join('\n\n')}
@@ -601,19 +669,24 @@ function renderCook(){
   if(run.done)$('#nowCard').innerHTML='<div class="txt" style="font-size:30px;font-weight:900">All done. Enjoy the party!</div>';
   else if(c){const left=c.dueAt-now;$('#nowCard').innerHTML=`<span class="pill"><span class="chip" style="--c:${color(c.dish)}">${esc(c.dish.name)}</span></span>
      <div class="txt">${esc(c.s.text)}</div><div class="count ${left<0?'over':''}">${mmss(left)}</div>
-     <p class="muted" style="margin:6px 0 0">${left<0?'Over the planned time. Say "next" when finished.':'Hands-on. Say "next" when you finish early.'}${run.paused?' Paused.':''}</p>`}
+     <p class="muted" style="margin:6px 0 0">${left<0?'Over the planned time. Say "next" when finished.':'Hands-on. Say "next" when you finish early.'}${run.muted?' Voice muted.':''}</p>`}
   else{const up=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b))[0];
-    $('#nowCard').innerHTML=`<p class="muted" style="margin:0">Your hands are free${run.paused?' (paused)':''}</p>${up?`<div class="txt">Next at ${fmtT(Math.max(now,sched(up)))}: ${esc(up.dish.name)}</div><div>${esc(up.s.text)}</div><div class="count" style="margin-top:8px">${mmss(Math.max(0,sched(up)-now))}</div><p class="muted" style="margin:6px 0 0">Say "next" to start early.</p>`:'<div class="txt" style="font-size:26px;font-weight:900">Waiting on timers</div>'}`}
+    $('#nowCard').innerHTML=`<p class="muted" style="margin:0">Your hands are free${run.muted?' (voice muted)':''}</p>${up?`<div class="txt">Next at ${fmtT(Math.max(now,sched(up)))}: ${esc(up.dish.name)}</div><div>${esc(up.s.text)}</div><div class="count" style="margin-top:8px">${mmss(Math.max(0,sched(up)-now))}</div><p class="muted" style="margin:6px 0 0">Say "next" to start early.</p>`:'<div class="txt" style="font-size:26px;font-weight:900">Waiting on timers</div>'}`}
   const r=S().filter(t=>t.state==='running'&&t.s.kind==='passive');
   $('#timers').innerHTML=r.length?r.map(t=>`<div class="timer"><div><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><div class="muted">${esc(t.s.text)}</div></div><b>${mmss(t.dueAt-now)}</b></div>`).join(''):'<p class="muted">No timers running.</p>';
   $('#upcoming').innerHTML=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b)).slice(0,5).map(t=>`<li style="--c:${color(t.dish)}"><time>${fmtT(Math.max(now,sched(t)))}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Timer'}</span><span class="tag">${fmtD(t.dur)}</span></div></div></li>`).join('')||'<p class="muted">Nothing left.</p>';
-  $('#pauseBtn').textContent=run.paused?'Resume':'Pause';
+  $('#pauseBtn').textContent=run.muted?'Unmute voice':'Mute voice';
 }
 $('#nextBtn').addEventListener('click',()=>{unlockAudio();addLog('you','Next');next()});
 $('#repeatBtn').addEventListener('click',()=>{unlockAudio();repeat()});
-$('#pauseBtn').addEventListener('click',()=>{unlockAudio();pause(!(run&&run.paused))});
+$('#pauseBtn').addEventListener('click',()=>{unlockAudio();pause(!(run&&run.muted))});
 
 if(!SR)micUI(false,'Voice input is not supported in this browser. Use Chrome or Edge, or type below.');
+$('#rateIn').value=voicePref.rate;loadVoices();
+$('#voiceSel').addEventListener('change',e=>{voicePref.name=e.target.value;saveVoice();speakTest()});
+$('#rateIn').addEventListener('change',e=>{voicePref.rate=+e.target.value;saveVoice();speakTest()});
+$('#voiceTest').addEventListener('click',()=>speakTest());
+function speakTest(){try{speechSynthesis.cancel()}catch(e){}const m=run;run=null;speak("Hi, I'm Thyme. Let's cook something lovely. Garlic chicken, 425 degrees, 15 minutes.");run=m}
 window.__thyme={plan,tick,heard,run:()=>run,state:()=>state};
 show(location.hash.slice(1)||'menu');
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
