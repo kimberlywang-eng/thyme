@@ -1,0 +1,7 @@
+<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="38" fill="#f4d56a"/><circle cx="40" cy="40" r="38" fill="none" stroke="#1f3a2c" stroke-width="2.5"/>
+<path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1f3a2c" stroke-width="3" stroke-linecap="round"/>
+<g fill="#8fc487" stroke="#1f3a2c" stroke-width="2" stroke-linejoin="round">
+<ellipse cx="0" cy="0" rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse cx="0" cy="0" rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/>
+<ellipse cx="0" cy="0" rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse cx="0" cy="0" rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/>
+<ellipse cx="0" cy="0" rx="7" ry="3.8" transform="translate(37 31) rotate(-45)"/><ellipse cx="0" cy="0" rx="7" ry="3.8" transform="translate(50 26) rotate(45)"/>
+<ellipse cx="0" cy="0" rx="6.5" ry="3.5" transform="translate(44 17) rotate(-80)"/></g></svg>

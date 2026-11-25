@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thyme</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#dcebd0"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="description" content="Thyme plans and talks you through cooking several dishes at once for big dinners."><link rel="icon" type="image/svg+xml" href="icons/icon.svg"><link rel="alternate icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='38' fill='%23f4d56a'/%3E%3Cpath d='M40 66C39 52 41 38 44 20' stroke='%231f3a2c' stroke-width='4' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, capable sous-chef; short clear words, big numbers you can read from the stove.
+   IDEA: a kitchen ticket rail: each dish is a ticket, each step a line with its time hanging out front.
+   PICTURE: the working tool itself: the Cook screen's big countdown card and the lane chart of dishes.
+   COLOUR and TYPE: pastel sage and butter yellow on warm cream, deep green ink; Nunito throughout.
+   LAYOUT: one column, tabs Menu / Plan / Cook, controls stacked on phones. */
+:root{color-scheme:light dark;
+--bg:light-dark(#fffdf2,#0f1612);--ink:light-dark(#1f3a2c,#e8f0e4);--mut:light-dark(#5f7566,#a3b7a8);
+--herb:light-dark(#dcebd0,#1b2d22);--onherb:light-dark(#1f3a2c,#eaf3e4);--mutherb:light-dark(#506b58,#b9d3c3);
+--leaf:light-dark(#a9d49f,#4f8f62);--pane:light-dark(#f2f6e2,#17231b);--line:light-dark(#e0e7c6,#2b3c31);
+--tom:light-dark(#f4d56a,#d9b94c);--onacc:#1f3a2c;--card:light-dark(#fffef8,#121c16);--over:light-dark(#b5432a,#ffb4a3)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Nunito,system-ui,sans-serif;line-height:1.1;margin:0}
+.band{padding:clamp(20px,3vw,40px) max(5vw,16px)}
+.wrap{max-width:1100px;margin:0 auto}
+header{background:linear-gradient(120deg,var(--herb) 55%,light-dark(#f6ecb4,#2a3320));color:var(--onherb);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+header h1{font-size:clamp(34px,5vw,48px);font-weight:800;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--mutherb)}.brand{display:flex;gap:14px;align-items:center}.brand svg{width:68px;height:68px;flex:none}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:rgba(255,255,255,.35);color:var(--onherb);border:1px solid light-dark(#b8cfa9,#4d6b5a);border-radius:999px}
+nav button[aria-current=true]{background:var(--tom);color:var(--onacc);border-color:var(--tom)}
+button,input,select,textarea{font:inherit;font-size:16px;color:inherit}
+button{min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:700}
+button.pri{background:var(--tom);border-color:var(--tom);color:var(--onacc)}
+button.grn{background:var(--leaf);border-color:var(--leaf);color:var(--onacc)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid light-dark(#2f7d5b,#f4d56a);outline-offset:2px}
+input,select,textarea{min-height:44px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card)}
+textarea{width:100%;min-height:140px}
+label{font-size:14px;color:var(--mut);display:grid;gap:4px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.pane{background:var(--pane);border-radius:22px;padding:18px;border:1px solid var(--line)}
+.muted{color:var(--mut);font-size:14px}
+.hide{display:none!important}
+h2{font-size:24px;margin-bottom:12px}
+section+section,.row+section{margin-top:22px}
+.dish{border:1px solid var(--line);border-radius:20px;padding:16px;background:var(--card);margin-top:14px;border-top:8px solid var(--c)}
+.dish header{background:none;color:inherit;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dish h3{font-size:20px;flex:1}
+.steps{width:100%;border-collapse:collapse;margin-top:10px}
+.steps td{padding:4px;vertical-align:top}
+.steps td:first-child{width:28px;color:var(--mut);padding-top:14px;text-align:right}
+.steps input.t{width:100%}
+.steps input.m{width:72px;text-align:right}
+.x{min-height:44px;padding:0 12px;background:none;border-color:transparent;color:var(--mut)}
+.note{background:light-dark(#fbf1c2,#2b2913);border-radius:8px;padding:8px 12px;font-size:14px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
+.lane .chip{overflow:hidden;text-overflow:ellipsis;display:block}.chip::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tag{font-size:12px;border-radius:6px;padding:2px 7px;white-space:nowrap;border:1px solid var(--line)}
+.tag.a{background:var(--tom);color:var(--onacc);border-color:var(--tom)}
+.big{font-family:Nunito,system-ui,sans-serif;font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.05}
+.lanes{display:grid;gap:8px;margin-top:10px}
+.lane{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;align-items:center}
+.track{position:relative;height:30px;background:var(--pane);border-radius:6px}
+.bar{position:absolute;top:3px;bottom:3px;border-radius:4px;background:var(--c);opacity:.9}
+.bar.p{background:repeating-linear-gradient(45deg,var(--c) 0 4px,transparent 4px 8px);border:2px solid var(--c);opacity:.75}
+.axis{display:flex;justify-content:space-between;margin-left:138px;font-size:13px;color:var(--mut)}
+.tl{list-style:none;padding:0;margin:0}
+.tl li{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tl time{font-family:Nunito,system-ui,sans-serif;font-weight:800;font-size:18px;white-space:nowrap;text-align:right}
+.tl .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.now{background:var(--herb);color:var(--onherb);border-radius:22px;padding:22px;border:1px solid var(--line)}
+.now .muted{color:var(--mutherb)}
+.count{font-family:Nunito,system-ui,sans-serif;font-weight:800;font-size:clamp(56px,13vw,104px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.count.over{color:var(--over)}
+.timers{display:grid;gap:8px}
+.timer{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--pane);border-radius:10px;padding:10px 14px}
+.timer b{font-family:Nunito,system-ui,sans-serif;font-size:24px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cookgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px}
+.mic{width:64px;height:64px;border-radius:50%;padding:0;display:grid;place-items:center;flex:none}
+.mic.on{background:var(--tom);border-color:var(--tom);color:var(--onacc);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(244,213,106,.35)}}
+@media (prefers-reduced-motion:reduce){.mic.on{animation:none}}
+.log{max-height:300px;overflow:auto;display:grid;gap:6px;font-size:15px}
+.log div{padding:6px 10px;border-radius:10px;max-width:90%}
+.log .you{justify-self:end;background:var(--pane)}
+.log .th{background:light-dark(#e3f0d8,#1d3326)}
+.log .ig{justify-self:end;color:var(--mut);font-style:italic;font-size:13px}
+.spin::after{content:"…";animation:none}
+@media(max-width:760px){.cookgrid{grid-template-columns:minmax(0,1fr)}.lane{grid-template-columns:80px minmax(0,1fr)}.axis{margin-left:88px}}
+@media(max-width:600px){.steps tr{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0}
+.steps td{padding:2px}.steps td:first-child{padding-top:2px}.steps td:nth-child(2){flex:1 1 calc(100% - 140px);order:0}.steps td:nth-child(6){order:1}.steps td:nth-child(3),.steps td:nth-child(4),.steps td:nth-child(5){order:2}
+.tl li{grid-template-columns:70px minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="brand"><svg viewBox="0 0 80 80" role="img" aria-label="Thyme logo"><circle cx="40" cy="40" r="38" fill="#f4d56a"/><circle cx="40" cy="40" r="38" fill="none" stroke="#1f3a2c" stroke-width="2.5"/>
+<path d="M40 66 C39 52 41 38 44 20" fill="none" stroke="#1f3a2c" stroke-width="3" stroke-linecap="round"/>
+<g fill="#8fc487" stroke="#1f3a2c" stroke-width="2" stroke-linejoin="round">
+<ellipse cx="0" cy="0" rx="8" ry="4.2" transform="translate(32 55) rotate(-35)"/><ellipse cx="0" cy="0" rx="8" ry="4.2" transform="translate(48 51) rotate(35)"/>
+<ellipse cx="0" cy="0" rx="7.5" ry="4" transform="translate(33 43) rotate(-40)"/><ellipse cx="0" cy="0" rx="7.5" ry="4" transform="translate(48 38) rotate(40)"/>
+<ellipse cx="0" cy="0" rx="7" ry="3.8" transform="translate(37 31) rotate(-45)"/><ellipse cx="0" cy="0" rx="7" ry="3.8" transform="translate(50 26) rotate(45)"/>
+<ellipse cx="0" cy="0" rx="6.5" ry="3.5" transform="translate(44 17) rotate(-80)"/></g></svg><div><h1>Thyme</h1><p>Your sous-chef for big dinners. Plan backward from party time, then cook hands-free.</p></div></div>
+  <nav aria-label="Views">
+    <button data-view="menu">1. Menu</button><button data-view="plan">2. Plan</button><button data-view="cook">3. Cook</button>
+  </nav>
+</div></header>
+
+<main class="band"><div class="wrap">
+
+<!-- MENU -->
+<div id="v-menu">
+  <section class="pane">
+    <h2>The party</h2>
+    <div class="grid">
+      <label>Food on the table at<input id="serve" type="datetime-local"></label>
+      <label>Burners<input id="burners" type="number" min="1" max="8"></label>
+      <label>Oven slots (dishes at once)<input id="ovens" type="number" min="1" max="4"></label>
+      <label>Cushion on hands-on steps (%)<input id="buffer" type="number" min="0" max="100" step="5"></label>
+      <label>Finish early by (min)<input id="tail" type="number" min="0" max="60" step="5"></label>
+    </div>
+    <p class="muted">The cushion stretches every hands-on step for human error (slow chopping, a phone call). "Finish early by" keeps a spare block before serving.</p>
+  </section>
+
+  <section>
+    <h2>Add a dish</h2>
+    <div class="row">
+      <label style="flex:2 1 220px">Dish name<input id="dname" placeholder="e.g. Garlic roast chicken" autocomplete="off"></label>
+      <label style="flex:0 1 110px">Servings<input id="dserv" type="number" min="1" value="8"></label>
+      <button class="pri" id="lookup">Look up steps</button>
+      <button id="pasteBtn">Paste my own steps</button>
+    </div>
+    <div id="pasteBox" class="hide" style="margin-top:12px">
+      <label>Your recipe steps (one per line is easiest)<textarea id="pasteTxt" placeholder="1. Preheat oven to 400F&#10;2. Chop the onions and carrots&#10;3. Roast for 45 minutes"></textarea></label>
+      <div class="row" style="margin-top:8px"><button class="pri" id="curate">Clean up with Thyme</button><button id="rawAdd">Add as is</button></div>
+    </div>
+    <p id="menuMsg" class="muted" role="status"></p>
+    <div class="row"><button id="sampleBtn">Load a sample dinner</button><button id="clearBtn" class="x">Clear all dishes</button></div>
+  </section>
+
+  <section id="dishes"></section>
+  <section><details class="pane"><summary><b>Settings: optional AI</b> <span class="muted" id="aiState"></span></summary>
+    <p class="muted">Thyme works without AI: it has built-in recipes and splits and times pasted steps with simple rules. To look up any dish by name and ask free-form questions, add your own Anthropic API key. It is stored only on this device, sent only to Anthropic, and charged to your own account. Thyme's makers never see it.</p>
+    <div class="row"><label style="flex:1 1 240px">Anthropic API key<input id="keyIn" type="password" autocomplete="off" placeholder="sk-ant-…"></label><button class="pri" id="keySave">Save key</button><button id="keyDel">Remove</button></div>
+    <p class="muted" id="keyMsg" role="status"></p></details></section>
+  <section class="row"><button class="grn" data-go="plan">See the plan</button></section>
+</div>
+
+<!-- PLAN -->
+<div id="v-plan" class="hide">
+  <section id="planTop"></section>
+  <section><h2>Who's on the stove when</h2><p class="muted">Solid bars need your hands. Striped bars run on their own (oven, simmer, rest), so Thyme slots other prep into them.</p><div id="lanes"></div></section>
+  <section><h2>Step by step</h2><ol class="tl" id="tl"></ol></section>
+</div>
+
+<!-- COOK -->
+<div id="v-cook" class="hide">
+  <div class="cookgrid">
+    <div>
+      <div class="now" id="nowCard"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="pri" id="nextBtn">Done, next step</button>
+        <button id="repeatBtn">Repeat</button>
+        <button id="pauseBtn">Pause</button>
+      </div>
+      <section><h3 style="font-size:18px;margin-bottom:8px">Timers running</h3><div class="timers" id="timers"></div></section>
+      <section><h3 style="font-size:18px;margin-bottom:8px">Coming up</h3><ol class="tl" id="upcoming"></ol></section>
+    </div>
+    <div>
+      <div class="pane">
+        <div class="row" style="align-items:center;flex-wrap:nowrap">
+          <button class="mic" id="micBtn" aria-label="Turn listening on"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+          <div><b id="micState">Listening is off</b><div class="muted" id="micHint">Tap the mic, then say "Okay Thyme, let's begin."</div></div>
+        </div>
+        <p class="muted" id="partial" style="min-height:1.5em;margin:10px 0 0"></p>
+        <form id="cmdForm" class="row" style="margin-top:6px;flex-wrap:nowrap">
+          <input id="cmd" placeholder='Or type: next, repeat, "how hot is the oven?"' style="flex:1" autocomplete="off">
+          <button>Send</button>
+        </form>
+        <p class="muted" style="margin:8px 0 0">Say: <b>next</b> or <b>done</b>, <b>repeat</b>, <b>what's next</b>, <b>timers</b>, <b>pause</b>. Ask anything about your recipes by starting with "Thyme…".</p>
+      </div>
+      <section><h3 style="font-size:18px;margin-bottom:8px">Conversation</h3><div class="log" id="log" aria-live="polite"></div></section>
+    </div>
+  </div>
+</div>
+
+</div></main>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS=['#86bd7f','#eac75a','#e8a48a','#8dbad6','#c4a6d8','#6fc3b2','#d6b98a'];
+let uid=0;const nid=()=>'i'+Date.now().toString(36)+(uid++);
+const use=n=>(window.claude&&window.claude.use)?window.claude.use(n).catch(()=>null):Promise.resolve(null);
+let sample=null,dict=null;
+/* AI is optional. Inside Claude it uses the page's own Claude; standalone it uses the visitor's OWN Anthropic key (kept only on this device). Thyme ships with no key. */
+let claudeSample=null;use('sample').then(s=>{claudeSample=s;refreshAI()});
+const KEY='thyme.apikey';const getKey=()=>{try{return localStorage.getItem(KEY)||''}catch(e){return ''}};
+const MODELS={quick:'claude-haiku-5-5',default:'claude-sonnet-5-5'};
+async function callAnthropic(prompt,tier){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:MODELS[tier]||MODELS.default,max_tokens:tier==='quick'?300:3000,messages:[{role:'user',content:prompt}]})});
+  if(!r.ok){const e=new Error('api '+r.status);e.code=r.status===401?'bad_key':r.status===429?'rate_limited':'api';throw e}
+  const j=await r.json();return (j.content||[]).map(c=>c.text||'').join('')}
+function makeSample(){
+  const f=async(prompt,o={})=>claudeSample?claudeSample(prompt,o):{text:await callAnthropic(prompt,o.modelTier)};
+  f.json=async(prompt,o={})=>{if(claudeSample)return claudeSample.json(prompt,o);const t=await callAnthropic(prompt,o.modelTier||'default');const m=t.match(/\{[\s\S]*\}/);if(!m)throw new Error('no json');return JSON.parse(m[0])};return f}
+function refreshAI(){sample=(claudeSample||getKey())?makeSample():null;const el=document.getElementById('aiState');if(el)el.textContent=sample?(claudeSample?'On (using Claude here)':'On (using your key)'):'Off (using built-in recipes)'}
+use('dictation').then(d=>{dict=d;if(d)wireDictation(d)});
+
+/* ---------- built-in recipes (used for the sample dinner, and when AI lookup is unavailable) ---------- */
+const LIB={
+ 'garlic roast chicken':{ing:['2 whole chickens (4 lb each)','6 tbsp soft butter','6 garlic cloves, minced','2 lemons','2 onions, 4 carrots','Fresh thyme, salt, pepper'],steps:[
+  ['Pat chickens dry; rub butter, garlic, salt and pepper under and over the skin.',12,'active','none'],
+  ['Preheat oven to 425°F.',15,'passive','oven'],
+  ['Cut onions and carrots into chunks for the pan; halve lemons and stuff into the cavities with thyme.',10,'active','none'],
+  ['Roast until the thickest part of the thigh reads 165°F.',75,'passive','oven'],
+  ['Rest chickens loosely covered with foil.',15,'passive','none'],
+  ['Carve and arrange on a platter with the pan vegetables.',12,'active','none']]},
+ 'garlic mashed potatoes':{ing:['5 lb Yukon Gold potatoes','1.5 cups whole milk','8 tbsp butter','4 garlic cloves, smashed','Salt'],steps:[
+  ['Peel potatoes and cut into 2-inch chunks.',18,'active','none'],
+  ['Cover potatoes with cold salted water and bring to a boil.',12,'passive','burner'],
+  ['Simmer until a fork slides in easily.',18,'passive','burner'],
+  ['Warm milk, butter and smashed garlic in a small pot.',5,'active','burner'],
+  ['Drain potatoes, mash, and fold in the warm garlic milk; season with salt.',8,'active','none']]},
+ 'lemon garlic green beans':{ing:['2 lb green beans','3 garlic cloves, sliced','3 tbsp olive oil','1 lemon (zest)','Salt'],steps:[
+  ['Trim green beans and slice garlic.',12,'active','none'],
+  ['Bring a large pot of salted water to a boil.',12,'passive','burner'],
+  ['Blanch beans for 3 minutes, then move them to ice water.',5,'active','burner'],
+  ['Sauté garlic in olive oil, add beans and toss 4 minutes; finish with lemon zest.',6,'active','burner']]},
+ 'apple crumble':{ing:['8 apples','1/2 cup sugar','2 tsp cinnamon','1 lemon (juice)','1 cup flour','1 cup oats','3/4 cup brown sugar','1 stick cold butter'],steps:[
+  ['Peel, core and slice apples; toss with sugar, cinnamon and lemon juice in a baking dish.',15,'active','none'],
+  ['Rub flour, oats, brown sugar and cold butter into a crumbly topping; scatter over apples.',8,'active','none'],
+  ['Bake at 375°F until bubbling and golden.',40,'passive','oven'],
+  ['Let cool before serving.',20,'passive','none']]},
+ 'roasted vegetables':{ing:['3 lb mixed root vegetables','4 tbsp olive oil','Salt, pepper, thyme'],steps:[['Preheat oven to 425°F.',15,'passive','oven'],['Cut vegetables into even chunks and toss with oil, salt, pepper and thyme on a sheet pan.',15,'active','none'],['Roast, turning once, until browned and tender.',40,'passive','oven']]},
+ 'mac and cheese':{ing:['1 lb elbow pasta','4 tbsp butter','1/4 cup flour','3 cups milk','4 cups grated cheddar','Salt'],steps:[['Boil a large pot of salted water.',12,'passive','burner'],['Cook pasta until just tender, then drain.',9,'passive','burner'],['Melt butter, whisk in flour, then slowly whisk in milk until thickened.',10,'active','burner'],['Stir in cheese until melted, fold in pasta and season.',5,'active','burner']]},
+ 'caesar salad':{ing:['3 romaine hearts','1/2 cup Caesar dressing','1 cup croutons','Parmesan'],steps:[['Wash, dry and tear the romaine.',10,'active','none'],['Toss with dressing, croutons and shaved parmesan just before serving.',5,'active','none']]},
+ 'rice pilaf':{ing:['2 cups long grain rice','4 cups broth','2 tbsp butter','1 onion, diced'],steps:[['Dice the onion.',5,'active','none'],['Sauté onion in butter, add rice and toast 2 minutes.',6,'active','burner'],['Add broth, bring to a boil, cover and simmer on low until absorbed.',20,'passive','burner'],['Rest covered, then fluff with a fork.',5,'passive','none']]},
+ 'lasagna':{ing:['12 lasagna noodles','1.5 lb ground beef','4 cups marinara','15 oz ricotta','3 cups mozzarella','1 egg'],steps:[['Brown the beef, then simmer with marinara.',20,'active','burner'],['Preheat oven to 375°F.',15,'passive','oven'],['Mix ricotta with egg and seasoning.',5,'active','none'],['Layer noodles, ricotta, meat sauce and mozzarella in a baking dish, repeating three times.',15,'active','none'],['Bake covered, then uncovered until bubbling and golden.',50,'passive','oven'],['Rest before slicing.',15,'passive','none']]},
+ 'chicken curry':{ing:['3 lb chicken thighs','2 onions','4 garlic cloves','2 tbsp curry powder','1 can coconut milk','1 can diced tomatoes'],steps:[['Chop onions and garlic; cube the chicken.',15,'active','none'],['Sauté onions and garlic, stir in curry powder, then brown the chicken.',12,'active','burner'],['Add coconut milk and tomatoes; simmer until chicken is cooked through and sauce thickens.',30,'passive','burner'],['Taste, season and garnish.',3,'active','none']]},
+ 'chocolate cake':{ing:['2 cups flour','2 cups sugar','3/4 cup cocoa','2 eggs','1 cup milk','1/2 cup oil','1 cup hot coffee'],steps:[['Preheat oven to 350°F and grease two 9-inch pans.',15,'passive','oven'],['Whisk dry ingredients, then mix in eggs, milk and oil, then the hot coffee.',12,'active','none'],['Bake until a toothpick comes out clean.',35,'passive','oven'],['Cool in pans, then turn out.',45,'passive','none'],['Frost the cooled cakes.',15,'active','none']]},
+ 'dinner rolls':{ing:['4 cups flour','1 packet yeast','1 cup warm milk','1/4 cup sugar','4 tbsp butter','1 egg'],steps:[['Mix dough and knead until smooth.',15,'active','none'],['Let dough rise until doubled.',60,'passive','none'],['Shape into rolls and place in a pan.',12,'active','none'],['Let rolls rise again.',30,'passive','none'],['Bake at 375°F until golden.',20,'passive','oven']]},
+ 'gravy':{ing:['4 tbsp pan drippings or butter','4 tbsp flour','3 cups broth','Salt, pepper'],steps:[['Whisk flour into the hot fat and cook 2 minutes.',4,'active','burner'],['Slowly whisk in broth and simmer until thickened.',10,'passive','burner'],['Season to taste.',2,'active','none']]},
+ 'cranberry sauce':{ing:['12 oz cranberries','3/4 cup sugar','3/4 cup water','1 orange (zest)'],steps:[['Combine cranberries, sugar, water and zest in a pot.',3,'active','burner'],['Simmer until berries pop and sauce thickens.',15,'passive','burner'],['Chill until serving.',60,'passive','none']]}
+};
+const fromLib=(name,serv)=>{const k=Object.keys(LIB).find(k=>k.includes(name.toLowerCase().trim())||name.toLowerCase().includes(k));if(!k)return null;const r=LIB[k];
+  return {id:nid(),name:k.replace(/\b\w/g,c=>c.toUpperCase()),servings:serv,ing:r.ing.slice(),notes:[],steps:r.steps.map(([text,min,kind,equip])=>({id:nid(),text,min,kind,equip}))}};
+
+/* ---------- state ---------- */
+const defServe=()=>{const d=new Date();d.setHours(19,0,0,0);if(d<new Date())d.setDate(d.getDate()+1);return toLocalInput(d)};
+function toLocalInput(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+let state;try{state=JSON.parse(localStorage.getItem('thyme.v1'))}catch(e){}
+if(!state||!state.cfg)state={dishes:[],cfg:{serve:defServe(),burners:4,ovens:1,buffer:15,tail:10}};
+const save=()=>{try{localStorage.setItem('thyme.v1',JSON.stringify(state))}catch(e){}};
+const color=d=>COLORS[state.dishes.indexOf(d)%COLORS.length];
+
+/* ---------- views ---------- */
+const VIEWS=['menu','plan','cook'];
+function show(v){if(!VIEWS.includes(v))v='menu';VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hide',x!==v));
+  document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===v));
+  if(v==='plan')renderPlan();if(v==='cook')renderCook();if(v==='menu')renderMenu()}
+$('#keySave').addEventListener('click',()=>{const v=$('#keyIn').value.trim();if(!/^sk-ant-/.test(v)){$('#keyMsg').textContent='That does not look like an Anthropic key (it starts with sk-ant-).';return}try{localStorage.setItem(KEY,v)}catch(e){}$('#keyIn').value='';refreshAI();$('#keyMsg').textContent='Saved on this device.'});
+$('#keyDel').addEventListener('click',()=>{try{localStorage.removeItem(KEY)}catch(e){}refreshAI();$('#keyMsg').textContent='Key removed.'});
+refreshAI();
+document.querySelectorAll('[data-view],[data-go]').forEach(b=>b.addEventListener('click',()=>{location.hash=b.dataset.view||b.dataset.go}));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+/* ---------- menu ---------- */
+const cfgIds=['serve','burners','ovens','buffer','tail'];
+cfgIds.forEach(k=>{const el=$('#'+k);el.value=state.cfg[k];el.addEventListener('change',()=>{state.cfg[k]=k==='serve'?el.value:Math.max(0,+el.value||0);save()})});
+const msg=t=>{$('#menuMsg').textContent=t};
+const fmtT=ms=>new Date(ms).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const fmtD=m=>m>=60?`${Math.floor(m/60)}h ${m%60?m%60+'m':''}`.trim():`${m} min`;
+
+function renderMenu(){
+  const box=$('#dishes');
+  if(!state.dishes.length){box.innerHTML='<p class="muted">No dishes yet. Type a dish name above, paste your own recipe, or load the sample dinner to try it out.</p>';return}
+  box.innerHTML='<h2>Your menu</h2>'+state.dishes.map(d=>`
+  <article class="dish" style="--c:${color(d)}" data-dish="${d.id}">
+    <header><h3>${esc(d.name)}</h3><span class="muted">${esc(d.servings)} servings · ${d.steps.length} steps</span><button class="x" data-act="deldish" aria-label="Remove dish">Remove</button></header>
+    ${(d.notes||[]).map(n=>`<div class="note">${esc(n)}</div>`).join('')}
+    ${d.ing&&d.ing.length?`<details style="margin-top:8px"><summary class="muted">Ingredients (${d.ing.length})</summary><ul>${d.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></details>`:''}
+    <table class="steps"><tbody>${d.steps.map((s,i)=>`<tr data-step="${s.id}">
+      <td>${i+1}</td>
+      <td><input class="t" data-f="text" value="${esc(s.text)}" aria-label="Step ${i+1}"></td>
+      <td><input class="m" type="number" min="1" data-f="min" value="${esc(s.min)}" aria-label="Minutes"> <span class="muted">min</span></td>
+      <td><select data-f="kind" aria-label="Hands-on or hands-off"><option value="active"${s.kind==='active'?' selected':''}>Hands-on</option><option value="passive"${s.kind==='passive'?' selected':''}>Hands-off</option></select></td>
+      <td><select data-f="equip" aria-label="Equipment"><option value="none">No equipment</option><option value="burner"${s.equip==='burner'?' selected':''}>Burner</option><option value="oven"${s.equip==='oven'?' selected':''}>Oven</option></select></td>
+      <td><button class="x" data-act="up" aria-label="Move up">↑</button><button class="x" data-act="delstep" aria-label="Delete step">✕</button></td></tr>`).join('')}</tbody></table>
+    <button class="x" data-act="addstep">+ Add a step</button>
+  </article>`).join('');
+}
+$('#dishes').addEventListener('change',e=>{const f=e.target.dataset.f;if(!f)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
+  const s=d.steps.find(x=>x.id===e.target.closest('[data-step]').dataset.step);s[f]=f==='min'?Math.max(1,Math.round(+e.target.value||1)):e.target.value;save()});
+$('#dishes').addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;const d=state.dishes.find(x=>x.id===e.target.closest('[data-dish]').dataset.dish);
+  const row=e.target.closest('[data-step]');const i=row?d.steps.findIndex(x=>x.id===row.dataset.step):-1;
+  if(a==='deldish')state.dishes.splice(state.dishes.indexOf(d),1);
+  if(a==='delstep')d.steps.splice(i,1);
+  if(a==='up'&&i>0)[d.steps[i-1],d.steps[i]]=[d.steps[i],d.steps[i-1]];
+  if(a==='addstep')d.steps.push({id:nid(),text:'',min:5,kind:'active',equip:'none'});
+  save();renderMenu()});
+$('#pasteBtn').addEventListener('click',()=>$('#pasteBox').classList.toggle('hide'));
+$('#sampleBtn').addEventListener('click',()=>{state.dishes=['garlic roast chicken','garlic mashed potatoes','lemon garlic green beans','apple crumble'].map(n=>fromLib(n,8));save();renderMenu();msg('Loaded a four-dish sample dinner. Open the Plan to see how Thyme interleaves it.')});
+$('#clearBtn').addEventListener('click',()=>{state.dishes=[];save();renderMenu()});
+
+const STEP_SCHEMA=`Return only JSON: {"name": string, "ingredients": [string], "notes": [string], "steps": [{"text": string, "min": integer, "kind": "active"|"passive", "equip": "none"|"oven"|"burner"}]}.
+Rules: "active" means hands-on, the cook must be there (chopping, searing, stirring, assembling, plating). "passive" means it runs unattended (baking, roasting, simmering, boiling water, resting, chilling, marinating, preheating). "equip" is what the step occupies for its whole duration: "oven" for preheating, baking, roasting; "burner" for anything on the stovetop; otherwise "none". "min" is realistic minutes for the stated servings. Each step is one short imperative sentence a cook can hear read aloud, with quantities and temperatures in it. Split steps that mix hands-on and hands-off work.`;
+
+function normDish(r,fallbackName,serv){
+  if(!r||!Array.isArray(r.steps)||!r.steps.length)throw new Error('no steps');
+  return {id:nid(),name:String(r.name||fallbackName).slice(0,80),servings:serv,ing:(r.ingredients||[]).map(String).slice(0,40),notes:(r.notes||[]).map(String).slice(0,6),
+   steps:r.steps.slice(0,25).map(s=>({id:nid(),text:String(s.text||'').slice(0,300),min:Math.max(1,Math.round(+s.min||5)),kind:s.kind==='passive'?'passive':'active',equip:['oven','burner'].includes(s.equip)?s.equip:'none'}))};
+}
+function busy(btn,on,label){btn.disabled=on;if(on){btn.dataset.l=btn.textContent;btn.textContent=label}else btn.textContent=btn.dataset.l||btn.textContent}
+
+$('#lookup').addEventListener('click',async e=>{
+  const name=$('#dname').value.trim(),serv=Math.max(1,+$('#dserv').value||8);if(!name){msg('Type a dish name first.');$('#dname').focus();return}
+  if(!sample){const d=fromLib(name,serv);if(d){state.dishes.push(d);save();renderMenu();msg(`Added ${d.name} from Thyme's built-in recipes.`)}else msg('Thyme does not have that one built in yet. Paste your own steps, or add an Anthropic key under Settings to look up any dish.');return}
+  busy(e.target,true,'Looking up…');msg(`Finding steps for ${name}…`);
+  try{const r=await sample.json(`You are Thyme, a cooking planner. Write a reliable home recipe for "${name}" serving ${serv}.\n${STEP_SCHEMA}`,{modelTier:'default'});
+    state.dishes.push(normDish(r,name,serv));save();renderMenu();msg(`Added ${name}. Check the minutes and edit anything that doesn't match how you cook.`);$('#dname').value=''}
+  catch(err){msg(err&&err.code==='bad_key'?'Your Anthropic key was rejected. Check it under Settings.':err&&err.code==='rate_limited'?'Anthropic is rate limiting your key. Wait a minute and try again.':'Lookup failed. Try again, or paste your own steps.')}
+  finally{busy(e.target,false)}
+});
+
+function heuristic(txt,name,serv){
+  const lines=txt.split(/\n+|(?<=\.)\s+(?=[A-Z])/).map(l=>l.replace(/^\s*(\d+[.)]|[-*•])\s*/,'').trim()).filter(l=>l.length>2);
+  return {id:nid(),name:name||'My recipe',servings:serv,ing:[],notes:['Thyme guessed the minutes and hands-on/hands-off for these steps. Please check them.'],steps:lines.map(t=>{
+    const lo=t.toLowerCase();const m=lo.match(/(\d+)(?:\s*(?:-|to)\s*(\d+))?\s*(hours?|hrs?|minutes?|mins?)/);
+    let min=m?(+(m[2]||m[1]))*(/h/.test(m[3])?60:1):0;
+    const passive=/\b(bake|roast|simmer|rest|chill|marinate|boil|rise|cool|refrigerate|preheat|braise)\b/.test(lo);
+    const equip=/\b(bake|roast|oven|broil|preheat)\b/.test(lo)?'oven':/\b(simmer|boil|saut|fry|sear|stove|skillet|pan|pot|braise)\w*/.test(lo)?'burner':'none';
+    return {id:nid(),text:t.slice(0,300),min:Math.max(1,min||(passive?15:5)),kind:passive?'passive':'active',equip}})};
+}
+$('#rawAdd').addEventListener('click',()=>{const t=$('#pasteTxt').value.trim();if(!t)return;state.dishes.push(heuristic(t,$('#dname').value.trim(),+$('#dserv').value||8));save();renderMenu();$('#pasteTxt').value='';msg('Added your steps.')});
+$('#curate').addEventListener('click',async e=>{
+  const t=$('#pasteTxt').value.trim(),name=$('#dname').value.trim(),serv=+$('#dserv').value||8;if(!t){msg('Paste your steps first.');return}
+  if(!sample){state.dishes.push(heuristic(t,name,serv));save();renderMenu();msg('Thyme split and timed your steps with simple rules. Please check them, or add an Anthropic key under Settings for a smarter clean-up.');return}
+  busy(e.target,true,'Cleaning up…');
+  try{const r=await sample.json(`You are Thyme, a cooking planner. The cook pasted their own recipe${name?` for "${name}"`:''}, serving ${serv}. Clean it up for a timed, read-aloud plan WITHOUT changing their method, ingredients or quantities: split combined steps, put them in a workable order, estimate minutes where missing, and pull out ingredients. In "notes", list up to 4 short suggestions or problems you noticed (missing temperature, unclear timing, a step that should start earlier). Do not add techniques they did not write.\n${STEP_SCHEMA}\n\nTHEIR RECIPE:\n${t}`,{modelTier:'default'});
+    state.dishes.push(normDish(r,name||'My recipe',serv));save();renderMenu();$('#pasteTxt').value='';msg('Cleaned up your recipe. Thyme\'s notes are on the dish card.')}
+  catch(err){state.dishes.push(heuristic(t,name,serv));save();renderMenu();msg('Clean-up failed, so Thyme added your steps with simple rules. Please check them.')}
+  finally{busy(e.target,false)}
+});
+
+/* ---------- scheduler: work backward from serve time ---------- */
+function plan(){
+  const cfg=state.cfg,ds=state.dishes.filter(d=>d.steps.length);
+  const tasks=[];
+  ds.forEach(d=>{let before=0;d.steps.forEach((s,i)=>{const dur=Math.max(1,Math.round(s.kind==='active'?s.min*(1+(+cfg.buffer||0)/100):s.min));tasks.push({dish:d,d:d.id,i,s,dur,before});before+=dur})});
+  const cap={oven:Math.max(1,+cfg.ovens||1),burner:Math.max(1,+cfg.burners||1),none:1e9};
+  const nxt={},ready={};ds.forEach(d=>{nxt[d.id]=d.steps.length-1;ready[d.id]=0});
+  const placed=[];let R=0;
+  // Reverse list scheduling: R = minutes before "done" time. Place each dish's LAST step first, so food finishes as close to serving as possible.
+  while(placed.length<tasks.length&&R<20000){
+    const live=placed.filter(t=>t.rs<=R&&R<t.re);
+    let chef=live.some(t=>t.s.kind==='active');const used={oven:0,burner:0,none:0};live.forEach(t=>used[t.s.equip||'none']++);
+    const cands=ds.filter(d=>nxt[d.id]>=0&&ready[d.id]<=R).map(d=>tasks.find(t=>t.d===d.id&&t.i===nxt[d.id]))
+      .sort((a,b)=>(b.before+b.dur)-(a.before+a.dur)); // longest remaining chain goes first
+    for(const t of cands){const eq=t.s.equip||'none';
+      if(t.s.kind==='active'&&chef)continue;if(used[eq]>=cap[eq])continue;
+      t.rs=R;t.re=R+t.dur;placed.push(t);if(t.s.kind==='active')chef=true;used[eq]++;nxt[t.d]--;ready[t.d]=t.re}
+    R++;
+  }
+  const total=placed.length?Math.max(...placed.map(t=>t.re)):0;
+  const serve=new Date(cfg.serve).getTime(),end=serve-(+cfg.tail||0)*60000;
+  placed.forEach(t=>{t.start=end-t.re*60000;t.end=end-t.rs*60000});
+  placed.sort((a,b)=>a.start-b.start||(a.s.kind==='active'?-1:1));
+  return {tasks:placed,start:end-total*60000,end,serve,total,hands:tasks.filter(t=>t.s.kind==='active').reduce((a,t)=>a+t.dur,0),serial:tasks.reduce((a,t)=>a+t.dur,0)};
+}
+
+function renderPlan(){
+  const p=plan();
+  if(!p.tasks.length){$('#planTop').innerHTML='<p class="muted">Add at least one dish on the Menu first.</p>';$('#lanes').innerHTML='';$('#tl').innerHTML='';return}
+  const late=p.start<Date.now();
+  $('#planTop').innerHTML=`<div class="pane"><p class="muted" style="margin:0">Start cooking at</p><div class="big">${fmtT(p.start)}</div>
+   <p style="margin:8px 0 0">${fmtD(p.total)} in the kitchen, ${fmtD(p.hands)} of it hands-on. Everything is ready by <b>${fmtT(p.end)}</b>, with ${esc(state.cfg.tail)} spare minutes before serving at <b>${fmtT(p.serve)}</b>.
+   Cooking one dish after another would take ${fmtD(p.serial)}; interleaving saves ${fmtD(Math.max(0,p.serial-p.total))}.</p>
+   ${late?`<div class="note">That start time has already passed. When you say "Okay Thyme, let's begin", Thyme shifts the plan to start right then and tells you the new finish time.</div>`:''}
+   <div class="row" style="margin-top:12px"><button class="pri" data-go2="cook">Go to Cook mode</button></div></div>`;
+  $('#planTop').querySelector('[data-go2]').addEventListener('click',()=>location.hash='cook');
+  const span=p.end-p.start;
+  const ds=state.dishes.filter(d=>d.steps.length);
+  $('#lanes').innerHTML=`<div class="lanes">${ds.map(d=>`<div class="lane" style="--c:${color(d)}"><span class="chip" style="--c:${color(d)}">${esc(d.name)}</span><div class="track">${
+    p.tasks.filter(t=>t.d===d.id).map(t=>`<div class="bar ${t.s.kind==='passive'?'p':''}" style="left:${(t.start-p.start)/span*100}%;width:${Math.max(.6,(t.end-t.start)/span*100)}%" title="${esc(fmtT(t.start)+' '+t.s.text)}"></div>`).join('')}</div></div>`).join('')}</div>
+    <div class="axis"><span>${fmtT(p.start)}</span><span>${fmtT(p.start+span/2)}</span><span>${fmtT(p.end)}</span></div>`;
+  $('#tl').innerHTML=p.tasks.map(t=>`<li><time>${fmtT(t.start)}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span>
+    <span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Hands-off'}</span><span class="tag">${fmtD(t.dur)}</span>${t.s.equip!=='none'?`<span class="tag">${t.s.equip==='oven'?'Oven':'Burner'}</span>`:''}</div></div></li>`).join('');
+}
+
+/* ---------- speech out ---------- */
+let speaking=false,lastSpokeEnd=0,lastSpoken='',actx=null;
+function chime(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const t=actx.currentTime;[880,1320].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.0001,t+i*.18);g.gain.exponentialRampToValueAtTime(.3,t+i*.18+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.18+.35);o.start(t+i*.18);o.stop(t+i*.18+.4)})}catch(e){}}
+function say(text,{beep=false,instr=false}={}){
+  addLog('th',text);if(instr&&run)run.last=text;lastSpoken=text.toLowerCase();
+  if(beep)chime();
+  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(text);u.rate=1;u.onstart=()=>{speaking=true};u.onend=u.onerror=()=>{speaking=false;lastSpokeEnd=Date.now()};
+    setTimeout(()=>speechSynthesis.speak(u),beep?650:0)}
+}
+function addLog(cls,text){const el=document.createElement('div');el.className=cls;el.textContent=text;const L=$('#log');L.appendChild(el);while(L.children.length>60)L.firstChild.remove();L.scrollTop=L.scrollHeight}
+
+/* ---------- speech in ---------- */
+let wantListen=false,rec=null;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function micUI(on,hint){$('#micBtn').classList.toggle('on',on);$('#micBtn').setAttribute('aria-label',on?'Turn listening off':'Turn listening on');
+  $('#micState').textContent=on?'Listening':'Listening is off';if(hint)$('#micHint').textContent=hint}
+function wireDictation(d){
+  d.onPartial(({text})=>{$('#partial').textContent=text});
+  d.onFinal(({text})=>{$('#partial').textContent='';heard(text,false)});
+  d.onState(({state:s,reason})=>{const on=s==='listening';micUI(on,on?'Say "Okay Thyme, let\'s begin" or a command.':(wantListen&&reason!=='stopped'&&reason!=='viewer_stopped'?'Listening paused. Tap the mic to resume.':'Tap the mic to talk to Thyme.'));if(!on&&(reason==='stopped'||reason==='viewer_stopped'))wantListen=false});
+}
+$('#micBtn').addEventListener('click',()=>{
+  unlockAudio();
+  if(wantListen){wantListen=false;if(dict)dict.stop().catch(()=>{});if(rec)try{rec.stop()}catch(e){};micUI(false,'Tap the mic to talk to Thyme.');return}
+  wantListen=true;
+  if(dict){dict.start().catch(e=>{wantListen=false;micUI(false,e&&e.code==='not_granted'?'Microphone was declined. You can still tap the buttons or type.':'Could not start listening. Tap to try again.')});return}
+  if(SR){startSR();return}
+  wantListen=false;micUI(false,'Voice input is not supported in this browser. Use Chrome or Edge, or type below.');
+});
+function startSR(){try{rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang='en-US';
+  rec.onresult=e=>{let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript}$('#partial').textContent=part;if(fin)heard(fin,false)};
+  rec.onend=()=>{if(wantListen)try{rec.start()}catch(e){}else micUI(false)};
+  rec.onerror=e=>{if(e.error==='not-allowed'){wantListen=false;micUI(false,'Microphone blocked. Use the buttons or type.')}};
+  rec.start();micUI(true,'Say "Okay Thyme, let\'s begin" or a command.')}catch(e){wantListen=false;micUI(false,'Could not start listening.')}}
+function unlockAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume()}catch(e){}if('speechSynthesis' in window&&!speaking){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}}
+
+$('#cmdForm').addEventListener('submit',e=>{e.preventDefault();unlockAudio();const v=$('#cmd').value.trim();if(!v)return;$('#cmd').value='';heard(v,true)});
+
+function heard(raw,typed){
+  const n=raw.toLowerCase().replace(/[^a-z0-9' ]+/g,' ').replace(/\s+/g,' ').trim();if(!n)return;
+  // ignore Thyme hearing itself through the speaker
+  if(!typed&&(speaking||Date.now()-lastSpokeEnd<1200||(n.length>6&&lastSpoken.includes(n)))){return}
+  const W='(thyme|time|tyme|thai me)';
+  const wake=new RegExp(`\\b(ok(ay)?|hey|hi|o k)\\s+${W}\\b`).test(n)||new RegExp(`^${W}\\b`).test(n);
+  const body=n.replace(new RegExp(`^.*?\\b(ok(ay)?|hey|hi|o k)\\s+${W}\\b\\s*`),'').replace(new RegExp(`^${W}\\s+`),'').trim();
+  addLog('you',raw);
+  if(/\blet'?s (begin|start|cook|go)\b|\blet us (begin|start)\b/.test(n)&&(wake||typed)){begin();return}
+  const c=body||n;
+  if(/^(ok |okay )?(next|next step|done|i'?m done|finished|i'?m finished|all done|skip|skip it|got it next|ready)$/.test(c)){next();return}
+  if(/^(repeat|repeat that|say (that|it) again|again|come again|what did you say|pardon)$/.test(c)){repeat();return}
+  if(/^(what'?s next|what is next|what'?s coming( up)?|what do i do( now| next)?|what now)$/.test(c)){whatsNext();return}
+  if(/^(timers?|check (the )?timers?|time left|how much time( is)? left|how long is left)$/.test(c)){timers();return}
+  if(/^(pause|hold on|wait)$/.test(c)){pause(true);return}
+  if(/^(resume|continue|unpause|keep going)$/.test(c)){pause(false);return}
+  if(/^(start now|begin now|start early)$/.test(c)){startNow();return}
+  if(/^(stop listening|go to sleep)$/.test(c)){$('#micBtn').click();return}
+  if(wake||typed){if(c.length<3){say('Yes? Ask me about your recipe, or say next.');return}ask(c);return}
+  const last=$('#log').lastChild;if(last){last.className='ig';last.textContent=raw+' (start with "Thyme…" to ask me)'}
+}
+
+/* ---------- cooking runtime ---------- */
+let run=null,ticker=null;
+const S=()=>run?run.steps:[];
+const sched=t=>t.start+run.offset;
+const depDone=t=>t.i===0||S().find(x=>x.d===t.d&&x.i===t.i-1).state==='done';
+const chefStep=()=>S().find(t=>t.state==='running'&&t.s.kind==='active');
+const capOf=e=>e==='oven'?Math.max(1,+state.cfg.ovens||1):e==='burner'?Math.max(1,+state.cfg.burners||1):1e9;
+const eqFree=t=>S().filter(x=>x.state==='running'&&x.s.equip===t.s.equip).length<capOf(t.s.equip);
+const mmss=ms=>{const neg=ms<0;ms=Math.abs(ms);const s=Math.round(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (neg?'+':'')+(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(r).padStart(2,'0')};
+
+function begin(){
+  unlockAudio();
+  const p=plan();if(!p.tasks.length){say('Add a dish on the menu first, then we can begin.');return}
+  run={steps:p.tasks.map(t=>({...t,state:'pending'})),offset:0,paused:false,last:'',planStart:p.start,end:p.end,done:false};
+  const now=Date.now();
+  if(p.start>now+60000){say(`Okay, let's do this. Your first step is at ${fmtT(p.start)}, and I'll call you then. Say "Thyme, start now" to begin early.`,{instr:true})}
+  else{run.offset=now-p.start;const lateMin=Math.round(run.offset/60000);
+    say(lateMin>1?`Okay, let's begin. We're starting ${fmtD(lateMin)} after the plan, so food will be ready around ${fmtT(p.end+run.offset)}.`:`Okay, let's begin. Food will be ready around ${fmtT(p.end)}.`)}
+  try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
+  clearInterval(ticker);ticker=setInterval(tick,1000);if(location.hash!=='#cook')location.hash='cook';tick();
+}
+function startNow(){if(!run){begin();return}run.offset=Date.now()-run.planStart;say(`Starting now. Food will be ready around ${fmtT(run.end+run.offset)}.`);tick()}
+function startStep(t,prefix=''){
+  const now=Date.now();t.state='running';t.startedAt=now;t.dueAt=now+t.dur*60000;t.alerted=false;
+  if(t.s.kind==='active')say(`${prefix}${t.dish.name}: ${t.s.text} You have ${fmtD(t.dur)}.`,{instr:true});
+  else say(`Starting a ${fmtD(t.dur)} timer for ${t.dish.name}: ${t.s.text}`,{beep:true});
+}
+function tick(){
+  if(!run){renderCook();return}
+  if(run.paused||run.done){renderCook();return}
+  const now=Date.now(),St=S();
+  for(const t of St)if(t.state==='running'&&!t.alerted&&now>=t.dueAt){t.alerted=true;
+    if(t.s.kind==='passive'){t.state='done';say(`Timer done. ${t.dish.name}: ${t.s.text.replace(/\.$/,'')} is finished.`,{beep:true})}
+    else say(`Time's up on ${t.dish.name}. Say "next" when you've finished.`,{beep:true})}
+  for(const t of St)if(t.state==='pending'&&t.s.kind==='passive'&&depDone(t)&&(t.i>0||now>=sched(t))&&eqFree(t))startStep(t);
+  if(!chefStep()){const c=St.filter(t=>t.state==='pending'&&t.s.kind==='active'&&depDone(t)&&now>=sched(t)&&eqFree(t)).sort((a,b)=>sched(a)-sched(b))[0];if(c)startStep(c)}
+  else for(const t of St)if(t.state==='pending'&&t.s.kind==='active'&&!t.warned&&depDone(t)&&now>=sched(t)+60000){t.warned=true;say(`Heads up: ${t.dish.name} is waiting on you. Say "next" when you finish this step.`)}
+  if(St.every(t=>t.state==='done')){run.done=true;say('That is everything. Food is ready. Enjoy your party!',{beep:true})}
+  renderCook();
+}
+function next(){
+  if(!run){say('Say "Okay Thyme, let\'s begin" to start cooking.');return}
+  if(run.paused)pause(false);
+  const now=Date.now(),c=chefStep();if(c)c.state='done';
+  // pull ahead only steps due within 15 min, so prepped food doesn't sit for an hour
+  const cand=S().filter(t=>t.state==='pending'&&t.s.kind==='active'&&depDone(t)&&eqFree(t)&&sched(t)<=now+15*60000).sort((a,b)=>sched(a)-sched(b))[0];
+  tick();
+  if(chefStep()&&chefStep()!==c)return; // tick already started the due one
+  if(cand){startStep(cand,sched(cand)>now+60000?'You\'re ahead, so let\'s get going. ':'');renderCook();return}
+  const up=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b))[0];
+  if(up)say(`Nice work. Nothing needs your hands right now. Next up at ${fmtT(Math.max(now,sched(up)))}: ${up.dish.name}, ${up.s.text}`);
+  else if(!run.done)say('Nice work. Just waiting on the timers now.');
+}
+function repeat(){say(run&&run.last?run.last:'Nothing to repeat yet.')}
+function whatsNext(){if(!run){say('We haven\'t started. Say "Okay Thyme, let\'s begin."');return}
+  const c=chefStep(),up=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b)).slice(0,2);
+  say((c?`You're on ${c.dish.name}: ${c.s.text} `:'')+(up.length?'After that: '+up.map(t=>`${t.dish.name}, ${t.s.text}`).join(' Then ')  :'Nothing else is left.'))}
+function timers(){const r=S().filter(t=>t.state==='running');if(!r.length){say('No timers running.');return}
+  say(r.map(t=>{const m=Math.round((t.dueAt-Date.now())/60000);return `${t.dish.name}, ${m>0?m+' minutes left':'time is up'}`}).join('. ')+'.')}
+function pause(on){if(!run)return;if(on&&!run.paused){run.paused=true;run.pausedAt=Date.now();say('Paused. Timers are held. Say "resume" when you are back.')}
+  else if(!on&&run.paused){const d=Date.now()-run.pausedAt;run.offset+=d;S().forEach(t=>{if(t.state==='running')t.dueAt+=d});run.paused=false;say(`Resuming. The plan moved back ${fmtD(Math.round(d/60000))}.`)}
+  renderCook()}
+
+/* ---------- questions: answered only from the recipes on hand ---------- */
+function recipeText(){return state.dishes.map(d=>`## ${d.name} (${d.servings} servings)\nIngredients: ${(d.ing||[]).join('; ')||'not listed'}\n`+d.steps.map((s,i)=>`${i+1}. ${s.text} [${s.min} min, ${s.kind==='active'?'hands-on':'hands-off'}${s.equip!=='none'?', '+s.equip:''}]`).join('\n')).join('\n\n')}
+async function ask(q){
+  const c=chefStep();
+  if(sample){try{const r=await sample(`You are Thyme, a voice kitchen assistant. Answer the cook's question using ONLY the recipes below. Do not use outside cooking knowledge. If the recipes don't answer it, say: "That isn't in your recipe, so I won't guess." and, if useful, name the closest step. Reply in at most two short spoken sentences, no markdown.\n\nRECIPES:\n${recipeText()}\n\n${c?`CURRENT STEP: ${c.dish.name}: ${c.s.text}\n\n`:''}QUESTION: ${q}`,{modelTier:'quick',cache:false});
+      say(String(r.text||'').trim()||'Sorry, I did not get an answer.');return}catch(e){}}
+  // offline fallback: find the step or ingredient that best matches the question's words
+  const words=q.split(' ').filter(w=>w.length>3&&!/^(what|when|where|which|does|should|thyme|how|long|much|the|with|about|have)$/.test(w));
+  let best=null,score=0;state.dishes.forEach(d=>{const dn=d.name.toLowerCase(),dw=words.filter(w=>dn.includes(w.replace(/s$/,''))),rest=words.filter(w=>!dw.includes(w));
+    [...d.steps.map(s=>s.text+` (${s.min} minutes)`),...(d.ing||[])].forEach(t=>{const sc=rest.filter(w=>t.toLowerCase().includes(w)).length*2+dw.length;if(rest.length&&sc>score){score=sc;best=`${d.name}: ${t}`}})});
+  say(best?`From your recipe, ${best}`:'That isn\'t in your recipe, so I won\'t guess.');
+}
+
+/* ---------- cook view ---------- */
+function renderCook(){
+  const now=Date.now();
+  if(!run){$('#nowCard').innerHTML=`<p class="muted" style="margin:0">Ready when you are</p><div class="big" style="margin:6px 0 10px">"Okay Thyme, let's begin."</div>
+     <p style="margin:0 0 14px">Tap the mic and say it, or press the button. Thyme reads each step aloud, starts its timer, and speaks up when a timer starts or ends.</p><button class="pri" id="beginBtn">Let's begin</button>`;
+    $('#beginBtn').addEventListener('click',()=>{addLog('you','Okay Thyme, let\'s begin.');begin()});
+    const p=plan();$('#timers').innerHTML='<p class="muted">No timers yet.</p>';
+    $('#upcoming').innerHTML=p.tasks.slice(0,5).map(t=>`<li><time>${fmtT(t.start)}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span></div></div></li>`).join('')||'<p class="muted">Add dishes on the Menu first.</p>';
+    return}
+  const c=chefStep();
+  if(run.done)$('#nowCard').innerHTML='<div class="big">All done. Enjoy the party!</div>';
+  else if(c){const left=c.dueAt-now;$('#nowCard').innerHTML=`<span class="chip" style="--c:${color(c.dish)}">${esc(c.dish.name)}</span>
+     <div style="font-size:22px;font-weight:600;margin:10px 0">${esc(c.s.text)}</div><div class="count ${left<0?'over':''}">${mmss(left)}</div>
+     <p class="muted" style="margin:6px 0 0">${left<0?'Over the planned time. Say "next" when finished.':'Hands-on. Say "next" when you finish early.'}${run.paused?' Paused.':''}</p>`}
+  else{const up=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b))[0];
+    $('#nowCard').innerHTML=`<p class="muted" style="margin:0">Your hands are free${run.paused?' (paused)':''}</p>${up?`<div style="font-size:20px;font-weight:600;margin:8px 0">Next at ${fmtT(Math.max(now,sched(up)))}: ${esc(up.dish.name)}</div><div>${esc(up.s.text)}</div><div class="count" style="margin-top:8px">${mmss(Math.max(0,sched(up)-now))}</div><p class="muted" style="margin:6px 0 0">Say "next" to start early.</p>`:'<div class="big">Waiting on timers</div>'}`}
+  const r=S().filter(t=>t.state==='running'&&t.s.kind==='passive');
+  $('#timers').innerHTML=r.length?r.map(t=>`<div class="timer"><div><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><div class="muted">${esc(t.s.text)}</div></div><b>${mmss(t.dueAt-now)}</b></div>`).join(''):'<p class="muted">No timers running.</p>';
+  $('#upcoming').innerHTML=S().filter(t=>t.state==='pending').sort((a,b)=>sched(a)-sched(b)).slice(0,5).map(t=>`<li><time>${fmtT(Math.max(now,sched(t)))}</time><div>${esc(t.s.text)}<div class="meta"><span class="chip" style="--c:${color(t.dish)}">${esc(t.dish.name)}</span><span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Timer'}</span><span class="tag">${fmtD(t.dur)}</span></div></div></li>`).join('')||'<p class="muted">Nothing left.</p>';
+  $('#pauseBtn').textContent=run.paused?'Resume':'Pause';
+}
+$('#nextBtn').addEventListener('click',()=>{unlockAudio();addLog('you','Next');next()});
+$('#repeatBtn').addEventListener('click',()=>{unlockAudio();repeat()});
+$('#pauseBtn').addEventListener('click',()=>{unlockAudio();pause(!(run&&run.paused))});
+
+if(!SR)micUI(false,'Voice input is not supported in this browser. Use Chrome or Edge, or type below.');
+window.__thyme={plan,tick,heard,run:()=>run,state:()=>state};
+show(location.hash.slice(1)||'menu');
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
