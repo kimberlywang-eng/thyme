@@ -127,6 +127,13 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 
 .shop{display:flex;gap:12px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--line);font-size:16px;color:var(--ink);font-weight:600}.shop input{width:24px;height:24px;min-height:0;flex:none;margin-top:2px;accent-color:#6fae63}.shop input:checked+span{opacity:.45;text-decoration:line-through}
 .libitem{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.libitem>div:nth-child(2){flex:1}.libitem b{display:block;line-height:1.2}.libact{display:flex;flex-direction:column;gap:6px;align-items:stretch}.libact button{min-height:38px;padding:4px 14px;font-size:14px}.libact .x{padding:2px 8px}
+.avimg{width:56px;height:56px;border-radius:18px;object-fit:cover;flex:none;background:var(--sage)}
+.pic{margin:4px 0 10px}.dphoto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:20px;background:var(--sage);display:block;margin-bottom:8px}
+.btn{display:grid;place-items:center;min-height:48px;padding:10px 20px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--line);background:var(--card);font-weight:800;cursor:pointer;text-align:center}
+.btn.pri{background:var(--butter);color:var(--onacc);box-shadow:0 6px 16px rgba(240,200,60,.35)}.btn.big{width:100%;min-height:58px;font-size:18px}
+.photoprev{width:100%;height:auto;aspect-ratio:4/3;border-radius:22px;display:block;background:var(--sage)}
+.chips .stylechip{display:grid;gap:4px;justify-items:center;padding:6px;border-radius:18px;background:var(--bg);box-shadow:inset 0 0 0 2px transparent;font-size:13px;min-height:0;flex:none}
+.chips .stylechip canvas{border-radius:12px;display:block}.stylechip[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--butter);background:var(--butter-s)}
 /* voice orb */
 .orbwrap{position:fixed;inset:0;z-index:40;display:grid;grid-template-rows:auto 1fr auto;padding:14px 18px calc(22px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 38%,var(--sage) 0%,var(--bg) 68%);animation:fadein .25s}
 @keyframes fadein{from{opacity:0}}
@@ -256,6 +263,17 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
   </div>
   <p class="muted" style="margin-top:12px">Extra time stretches every hands-on step for slow chopping or a phone call. Finishing early leaves a spare block before serving.</p>
   <div class="row" style="margin-top:14px"><button class="pri big" data-close>Done</button></div>
+</dialog>
+
+<dialog class="sheet" id="photoSheet"><div class="grab"></div>
+  <h2>Recipe photo</h2>
+  <div id="photoPick"><p class="muted" style="margin-bottom:14px">Snap the dish or pick a picture from your camera roll. Thyme can turn it into a little illustration. The picture stays on this device.</p>
+    <label class="btn pri big">Take a photo<input type="file" accept="image/*" capture="environment" id="photoCam" class="hide"></label>
+    <label class="btn big" style="margin-top:10px">Choose from camera roll<input type="file" accept="image/*" id="photoRoll" class="hide"></label></div>
+  <div id="photoEdit" class="hide"><canvas id="photoPrev" class="photoprev" width="480" height="360"></canvas><p class="muted" id="photoBusy" role="status" style="min-height:1.4em;margin:8px 0"></p>
+    <div class="chips" id="photoStyles"></div>
+    <div class="row" style="margin-top:12px"><button class="pri" id="photoSave">Save photo</button><button id="photoRetake">Pick another</button></div></div>
+  <div class="row" style="margin-top:12px"><button class="x" data-close>Cancel</button></div>
 </dialog>
 
 <dialog class="sheet" id="libSheet"><div class="grab"></div>
@@ -447,7 +465,7 @@ function toLocalInput(d){const p=n=>String(n).padStart(2,'0');return `${d.getFul
 let state;try{state=JSON.parse(localStorage.getItem('thyme.v1'))}catch(e){}
 if(!state||!state.cfg)state={dishes:[],cfg:{serve:defServe(),burners:4,ovens:1,buffer:15,tail:10}};
 /* ---------- recipe library: every recipe you look up, paste or edit is kept on this device ---------- */
-const LIBKEY='thyme.library';let lib=[],libOK=true;
+const LIBKEY='thyme.library';let lib=[],libOK=true,imgs={};
 try{lib=JSON.parse(localStorage.getItem(LIBKEY)||'[]');if(!Array.isArray(lib))lib=[]}catch(e){lib=[]}
 const newLibId=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function saveLib(){try{localStorage.setItem(LIBKEY,JSON.stringify(lib));libOK=true}catch(e){libOK=false}updateLibUI()}
@@ -495,9 +513,10 @@ function renderMenu(){
   $('#menuCount').textContent=n?`${n} ${n===1?'dish':'dishes'}, ${state.dishes.reduce((a,x)=>a+x.steps.length,0)} steps in all`:'';
   box.innerHTML=state.dishes.map(d=>`
   <details class="dish" style="--c:${color(d)}" data-dish="${d.id}"${open.has(d.id)?' open':''}>
-    <summary><span class="av">${esc((d.name||'?').trim().charAt(0).toUpperCase())}</span><div><h3>${esc(d.name)}</h3><div class="sm">${esc(d.servings)} servings · ${d.steps.length} steps · ${fmtD(dishMin(d))}</div></div>
+    <summary><img class="avimg" alt="" src="${picOf(d)}"><div><h3>${esc(d.name)}</h3><div class="sm">${esc(d.servings)} servings · ${d.steps.length} steps · ${fmtD(dishMin(d))}</div></div>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
     <div class="dbody">
+    <div class="pic"><img class="dphoto" alt="" src="${picOf(d)}"><div class="row"><button class="sage" data-act="photo">${imgs[d.libId]?'Change photo':'Add a photo'}</button>${imgs[d.libId]?'<button class="x" data-act="rmphoto">Remove photo</button>':''}</div></div>
     <label style="margin:2px 0 6px">Recipe name<input data-dname value="${esc(d.name)}" maxlength="80"></label>
     ${(d.notes||[]).map(n=>`<div class="note">${esc(n)}</div>`).join('')}
     ${d.ing&&d.ing.length?`<details style="margin:8px 0"><summary class="muted" style="cursor:pointer;font-weight:800">Ingredients (${d.ing.length})</summary><ul style="margin:8px 0">${d.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></details>`:''}
@@ -520,6 +539,8 @@ $('#dishes').addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)ret
   if(a==='deldish')state.dishes.splice(state.dishes.indexOf(d),1);
   if(a==='delstep')d.steps.splice(i,1);
   if(a==='up'&&i>0)[d.steps[i-1],d.steps[i]]=[d.steps[i],d.steps[i-1]];
+  if(a==='photo'){openPhoto(d.id);return}
+  if(a==='rmphoto'&&d.libId){imgDel(d.libId);renderMenu();updateLibUI();return}
   if(a==='addstep')d.steps.push({id:nid(),text:'',min:5,kind:'active',equip:'none'});
   save();renderMenu()});
 $('#pasteBtn').addEventListener('click',()=>$('#pasteBox').classList.toggle('hide'));
@@ -889,7 +910,7 @@ function renderMine(){const items=[...lib].sort((a,b)=>(b.usedAt||0)-(a.usedAt||
   $('#mine').innerHTML=items.map(r=>`<button data-mylib="${esc(r.libId)}">${esc(r.name)}</button>`).join('')+(lib.length>8?'<button data-seeall>See all</button>':'')}
 function renderLib(){const q=norm($('#libQ').value||'');
   const items=[...lib].sort((a,b)=>(b.usedAt||0)-(a.usedAt||0)).filter(r=>!q||norm(r.name).includes(q)||(r.ing||[]).some(i=>norm(i).includes(q)));
-  $('#libList').innerHTML=items.length?items.map((r,i)=>`<div class="libitem" data-libid="${esc(r.libId)}"><span class="av" style="--c:${COLORS[i%COLORS.length]}">${esc((r.name||'?').trim().charAt(0).toUpperCase())}</span>
+  $('#libList').innerHTML=items.length?items.map((r,i)=>`<div class="libitem" data-libid="${esc(r.libId)}"><img class="avimg" alt="" src="${picOf(r)}">
     <div><b>${esc(r.name)}</b><div class="sm muted">${r.steps.length} steps · ${esc(r.servings)} servings · used ${ago(r.usedAt||r.savedAt)}${state.dishes.some(d=>d.libId===r.libId)?' · on menu':''}</div></div>
     <div class="libact"><button class="${state.dishes.some(d=>d.libId===r.libId)?'sage':'pri'}" data-la="add">${state.dishes.some(d=>d.libId===r.libId)?'On menu':'Add'}</button><button data-la="edit">Edit</button><button class="x" data-la="del">Delete</button></div></div>`).join('')
    :`<div class="empty"><p>${lib.length?'No recipes match your search.':'Nothing saved yet. Add a dish and it will show up here.'}</p></div>`;
@@ -903,9 +924,9 @@ $('#mine').addEventListener('click',e=>{const id=e.target.dataset.mylib;if(id){c
 $('#libList').addEventListener('click',e=>{const a=e.target.dataset.la;if(!a)return;const id=e.target.closest('[data-libid]').dataset.libid;
   if(a==='add'){const d=addFromLib(id);if(d){toast('Added '+d.name);renderLib()}}
   if(a==='edit'){const d=addFromLib(id);if(d){$('#libSheet').close();location.hash='menu';setTimeout(()=>{const el=document.querySelector(`[data-dish="${d.id}"]`);if(el){el.open=true;el.scrollIntoView({behavior:'smooth',block:'center'})}},60)}}
-  if(a==='del'){if(e.target.dataset.armed){const r=lib.find(x=>x.libId===id);lib=lib.filter(x=>x.libId!==id);state.dishes.forEach(d=>{if(d.libId===id){d.libId=null;d.noLib=true}});save();saveLib();toast(`Deleted ${r?r.name:'recipe'} from your library`)}
+  if(a==='del'){if(e.target.dataset.armed){const r=lib.find(x=>x.libId===id);lib=lib.filter(x=>x.libId!==id);imgDel(id);state.dishes.forEach(d=>{if(d.libId===id){d.libId=null;d.noLib=true}});save();saveLib();toast(`Deleted ${r?r.name:'recipe'} from your library`)}
     else{e.target.dataset.armed='1';e.target.textContent='Tap again to delete';setTimeout(()=>{if(e.target.isConnected){delete e.target.dataset.armed;e.target.textContent='Delete'}},3000)}}});
-$('#libExport').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({app:'thyme',version:1,exportedAt:new Date().toISOString(),recipes:lib},null,2)],{type:'application/json'});
+$('#libExport').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({app:'thyme',version:1,exportedAt:new Date().toISOString(),recipes:lib.map(r=>imgs[r.libId]?{...r,img:imgs[r.libId]}:r)},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='thyme-recipes.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast(`Exported ${lib.length} recipe${lib.length===1?'':'s'}`)});
 $('#libImportBtn').addEventListener('click',()=>$('#libImport').click());
 const cleanRec=r=>{if(!r||typeof r!=='object'||!Array.isArray(r.steps))return null;const str=(x,n)=>String(x??'').slice(0,n);
@@ -913,15 +934,86 @@ const cleanRec=r=>{if(!r||typeof r!=='object'||!Array.isArray(r.steps))return nu
   if(!steps.length||!str(r.name,80).trim())return null;
   return {libId:/^[\w-]{3,40}$/.test(String(r.libId||''))?String(r.libId):newLibId(),name:str(r.name,80).trim(),servings:Math.min(500,Math.max(1,Math.round(+r.servings)||8)),
    ing:(Array.isArray(r.ing)?r.ing:[]).slice(0,80).map(x=>str(x,120)).filter(Boolean),notes:(Array.isArray(r.notes)?r.notes:[]).slice(0,6).map(x=>str(x,300)),steps,
-   savedAt:+r.savedAt||Date.now(),updatedAt:+r.updatedAt||Date.now(),usedAt:+r.usedAt||+r.savedAt||Date.now()}};
+   savedAt:+r.savedAt||Date.now(),updatedAt:+r.updatedAt||Date.now(),usedAt:+r.usedAt||+r.savedAt||Date.now(),_img:typeof r.img==='string'&&r.img.length<450000&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(r.img)?r.img:null}};
 $('#libImport').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
   try{if(f.size>5e6)throw 0;const j=JSON.parse(await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsText(f)}));const list=Array.isArray(j)?j:j&&j.recipes;if(!Array.isArray(list))throw 0;
-    let added=0,updated=0;list.slice(0,500).map(cleanRec).filter(Boolean).forEach(r=>{const o=lib.find(x=>x.libId===r.libId)||lib.find(x=>norm(x.name)===norm(r.name)&&recKey(x)===recKey(r));
-      if(!o){if(lib.length<1000){lib.push(r);added++}}else if(r.updatedAt>o.updatedAt&&recKey(o)!==recKey(r)){Object.assign(o,r,{libId:o.libId});updated++}});
+    let added=0,updated=0;list.slice(0,500)  .map(cleanRec).filter(Boolean).forEach(r=>{const im=r._img;delete r._img;const o=lib.find(x=>x.libId===r.libId)||lib.find(x=>norm(x.name)===norm(r.name)&&recKey(x)===recKey(r));
+      if(!o){if(lib.length<1000){lib.push(r);added++;if(im)imgPut(r.libId,im)}}else if(r.updatedAt>o.updatedAt&&recKey(o)!==recKey(r)){Object.assign(o,r,{libId:o.libId});updated++}
+      if(o&&im&&!imgs[o.libId])imgPut(o.libId,im)});
     saveLib();toast(`Imported ${added} new, updated ${updated}`)}catch(err){toast('That file is not a Thyme recipe backup.')}});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 syncLib();updateLibUI();
-window.__thyme={plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic,lib:()=>lib,addFromLib,findLib};
+
+/* ---------- recipe photos: stored in IndexedDB, cartoon filters run on the device ---------- */
+const rq=r=>new Promise((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+let imgDB=null,imgOK=true;
+async function imgOpen(){if(imgDB)return imgDB;imgDB=await new Promise((ok,no)=>{const r=indexedDB.open('thyme-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});return imgDB}
+async function imgLoadAll(){try{const st=(await imgOpen()).transaction('img').objectStore('img');const ks=await rq(st.getAllKeys()),vs=await rq(st.getAll());ks.forEach((k,i)=>{imgs[k]=vs[i]})}catch(e){imgOK=false}renderMenu();updateLibUI()}
+async function imgPut(id,url){imgs[id]=url;try{await rq((await imgOpen()).transaction('img','readwrite').objectStore('img').put(url,id))}catch(e){imgOK=false;toast("Couldn't keep the photo on this device")}}
+async function imgDel(id){delete imgs[id];try{await rq((await imgOpen()).transaction('img','readwrite').objectStore('img').delete(id))}catch(e){}}
+/* little drawn pictures for recipes with no photo */
+const ILL_BG=['#fcf1c2','#d4e8c9','#f9ddd0','#dbe8f2','#e9ddf2'];const illCache={};
+function illus(name){name=String(name||'');if(illCache[name])return illCache[name];const n=norm(name);let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))>>>0;
+  const S='stroke="#1d3527" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';let g;
+  if(/chicken|turkey|ham|roast|beef|pork|steak|meat|duck|lamb|rib|sausage|bacon/.test(n))g=`<g ${S}><ellipse cx="58" cy="40" rx="25" ry="19" transform="rotate(-35 58 40)" fill="#e9a77c"/><path d="M72 54 L92 72" fill="none" stroke-width="8"/><path d="M72 54 L92 72" fill="none" stroke="#fff8e8" stroke-width="3"/><circle cx="93" cy="70" r="5" fill="#fff8e8"/><circle cx="88" cy="75" r="5" fill="#fff8e8"/><path d="M46 32 Q54 26 62 30" fill="none" stroke-width="2.5"/></g>`;
+  else if(/potato|mash|fries|gratin/.test(n))g=`<g ${S}><ellipse cx="60" cy="48" rx="32" ry="21" transform="rotate(-12 60 48)" fill="#e6c48f"/><circle cx="48" cy="44" r="2.5" fill="#c9a066" stroke="none"/><circle cx="64" cy="54" r="2.5" fill="#c9a066" stroke="none"/><circle cx="74" cy="40" r="2.5" fill="#c9a066" stroke="none"/></g>`;
+  else if(/cake|crumble|pie|cookie|brownie|dessert|pudding|tart|cobbler|chocolate|cupcake|muffin/.test(n))g=`<g ${S}><path d="M38 50 L82 50 L76 76 L44 76 Z" fill="#f6dc78"/><path d="M42 50 Q40 36 52 34 Q54 24 64 26 Q74 24 76 34 Q86 38 80 50 Z" fill="#f7c6d0"/><circle cx="62" cy="22" r="5" fill="#e5634d"/><path d="M50 56 V72 M60 56 V72 M70 56 V72" fill="none" stroke-width="2"/></g>`;
+  else if(/pasta|mac|lasagna|spaghetti|noodle|ravioli|rice|pilaf/.test(n))g=`<g ${S}><path d="M26 50 H94 A34 30 0 0 1 26 50 Z" fill="#fff8e8"/><path d="M34 48 Q40 34 48 46 Q54 32 62 46 Q68 34 76 46 Q82 36 88 48" fill="none" stroke="#e2b64a" stroke-width="5"/><path d="M52 24 Q48 18 52 12 M64 24 Q60 18 64 12" fill="none" stroke-width="2.5" opacity=".6"/></g>`;
+  else if(/bread|roll|biscuit|bun|bagel|toast|focaccia/.test(n))g=`<g ${S}><path d="M28 62 Q26 30 60 28 Q94 30 92 62 Z" fill="#e8b86d"/><path d="M44 40 Q48 46 44 54 M60 38 Q64 46 60 56 M76 40 Q80 46 76 54" fill="none" stroke-width="2.5"/></g>`;
+  else if(/soup|curry|stew|chili|gravy|sauce|cranberry|broth/.test(n))g=`<g ${S}><path d="M26 46 H94 A34 30 0 0 1 26 46 Z" fill="#a4d198"/><ellipse cx="60" cy="46" rx="34" ry="6" fill="#f6dc78"/><path d="M48 34 Q44 26 48 18 M62 34 Q58 26 62 18 M76 34 Q72 26 76 18" fill="none" stroke-width="2.5" opacity=".6"/></g>`;
+  else if(/bean|salad|veg|broccoli|carrot|kale|asparagus|spinach|sprout|pea|green|lemon|herb|thyme/.test(n))g=`<g ${S}><path d="M60 74 C58 56 62 40 66 18" fill="none"/><g fill="#8fc487"><ellipse rx="12" ry="6" transform="translate(48 62) rotate(-35)"/><ellipse rx="12" ry="6" transform="translate(72 56) rotate(35)"/><ellipse rx="11" ry="5.5" transform="translate(50 46) rotate(-40)"/><ellipse rx="11" ry="5.5" transform="translate(74 38) rotate(40)"/><ellipse rx="10" ry="5" transform="translate(56 30) rotate(-45)"/><ellipse rx="9" ry="4.5" transform="translate(68 20) rotate(-70)"/></g></g>`;
+  else g=`<g ${S}><rect x="30" y="38" width="60" height="34" rx="9" fill="#a4d198"/><path d="M26 38 H94" fill="none"/><path d="M40 38 Q60 22 80 38" fill="#fff8e8"/><circle cx="60" cy="27" r="3.5" fill="#1d3527"/><path d="M26 50 H18 M94 50 H102" fill="none"/><path d="M50 18 Q46 12 50 6 M70 18 Q66 12 70 6" fill="none" stroke-width="2.5" opacity=".6"/></g>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" fill="${ILL_BG[h%ILL_BG.length]}"/>${g}</svg>`;
+  return illCache[name]='data:image/svg+xml,'+encodeURIComponent(svg)}
+const picOf=x=>imgs[x.libId]||illus(x.name);
+/* cartoon pipeline: painterly flattening (Kuwahara), saturation, posterise, ink outlines */
+function kuwahara(src,w,h,r){const W1=w+1,N=W1*(h+1),iR=new Float64Array(N),iG=new Float64Array(N),iB=new Float64Array(N),iL=new Float64Array(N),iQ=new Float64Array(N);
+  for(let y=0;y<h;y++){let sr=0,sg=0,sb=0,sl=0,sq=0;for(let x=0;x<w;x++){const i=(y*w+x)*4,R=src[i],G=src[i+1],B=src[i+2],L=.299*R+.587*G+.114*B;sr+=R;sg+=G;sb+=B;sl+=L;sq+=L*L;const k=(y+1)*W1+x+1,u=y*W1+x+1;iR[k]=iR[u]+sr;iG[k]=iG[u]+sg;iB[k]=iB[u]+sb;iL[k]=iL[u]+sl;iQ[k]=iQ[u]+sq}}
+  const out=new Uint8ClampedArray(src.length),S=(a,x0,y0,x1,y1)=>a[(y1+1)*W1+x1+1]-a[y0*W1+x1+1]-a[(y1+1)*W1+x0]+a[y0*W1+x0];
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let bv=1e18,bx0=0,by0=0,bx1=0,by1=0;
+    for(let q=0;q<4;q++){const x0=q&1?x:Math.max(0,x-r),x1=q&1?Math.min(w-1,x+r):x,y0=q&2?y:Math.max(0,y-r),y1=q&2?Math.min(h-1,y+r):y,c=(x1-x0+1)*(y1-y0+1),m=S(iL,x0,y0,x1,y1)/c,v=S(iQ,x0,y0,x1,y1)/c-m*m;if(v<bv){bv=v;bx0=x0;by0=y0;bx1=x1;by1=y1}}
+    const c=(bx1-bx0+1)*(by1-by0+1),i=(y*w+x)*4;out[i]=S(iR,bx0,by0,bx1,by1)/c;out[i+1]=S(iG,bx0,by0,bx1,by1)/c;out[i+2]=S(iB,bx0,by0,bx1,by1)/c;out[i+3]=255}
+  return out}
+function adjust(d,sat,lift,levels,tint,tw){for(let i=0;i<d.length;i+=4){const L=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+  for(let k=0;k<3;k++){let v=L+(d[i+k]-L)*sat+lift;if(tint)v=v*(1-tw)+tint[k]*tw;if(levels)v=Math.round(v/255*(levels-1))/(levels-1)*255;d[i+k]=v}}}
+function outline(d,w,h,strength,t0,t1){const L=new Float32Array(w*h);for(let i=0;i<w*h;i++)L[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];const o=[29,53,39],res=new Uint8ClampedArray(d);
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,gx=-L[i-w-1]-2*L[i-1]-L[i+w-1]+L[i-w+1]+2*L[i+1]+L[i+w+1],gy=-L[i-w-1]-2*L[i-w]-L[i-w+1]+L[i+w-1]+2*L[i+w]+L[i+w+1];
+    const a=Math.min(1,Math.max(0,(Math.hypot(gx,gy)-t0)/(t1-t0)))*strength;if(a>0){const j=i*4;for(let k=0;k<3;k++)res[j+k]=res[j+k]*(1-a)+o[k]*a}}
+  d.set(res)}
+function cartoonize(src,style){const w=src.width,h=src.height,k=w/480,ctx=src.getContext('2d'),id=ctx.getImageData(0,0,w,h);
+  if(style==='orig')return src;
+  let d;
+  if(style==='cartoon'){d=kuwahara(id.data,w,h,Math.max(2,Math.round(4*k)));d=kuwahara(d,w,h,Math.max(2,Math.round(2*k)));adjust(d,1.4,8,9,[255,246,222],.12);outline(d,w,h,.85,40,120)}
+  else if(style==='story'){d=kuwahara(id.data,w,h,Math.max(3,Math.round(7*k)));adjust(d,.95,10,0,[255,244,214],.2);outline(d,w,h,.3,50,140);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*12;d[i]+=n;d[i+1]+=n;d[i+2]+=n}}
+  else{d=kuwahara(id.data,w,h,Math.max(2,Math.round(3*k)));for(let i=0;i<d.length;i+=4){const L=(.299*d[i]+.587*d[i+1]+.114*d[i+2])/255,t=[205+45*L,228+22*L,175+25*L];for(let c=0;c<3;c++)d[i+c]=d[i+c]*.6+t[c]*.4}adjust(d,.9,6,16,null,0)}
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').putImageData(new ImageData(d,w,h),0,0);return c}
+/* photo sheet */
+let photoSrc=null,photoDish=null,photoStyle='cartoon',photoOut={};const STYLES=[['cartoon','Cartoon'],['story','Storybook'],['pastel','Pastel'],['orig','Original']];
+const tick10=()=>new Promise(r=>setTimeout(r,25));
+function openPhoto(did){photoDish=did;photoSrc=null;photoOut={};$('#photoPick').classList.remove('hide');$('#photoEdit').classList.add('hide');$('#photoBusy').textContent='';$('#photoSheet').showModal()}
+function loadPhotoFile(f){if(!f)return;if(!/^image\//.test(f.type)){toast('That does not look like a photo.');return}
+  const url=URL.createObjectURL(f),im=new Image();
+  im.onload=async()=>{const W=480,H=360,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.imageSmoothingQuality='high';
+    const s=Math.max(W/im.naturalWidth,H/im.naturalHeight),dw=im.naturalWidth*s,dh=im.naturalHeight*s;x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);URL.revokeObjectURL(url);
+    photoSrc=c;photoOut={orig:c};photoStyle='cartoon';$('#photoPick').classList.add('hide');$('#photoEdit').classList.remove('hide');await buildStyles()};
+  im.onerror=()=>{URL.revokeObjectURL(url);toast('Could not open that photo.')};im.src=url}
+async function buildStyles(){$('#photoBusy').textContent='Drawing your cartoon…';$('#photoSave').disabled=true;const box=$('#photoStyles');box.innerHTML='';
+  for(const [k,l] of STYLES){await tick10();if(!photoOut[k])photoOut[k]=cartoonize(photoSrc,k);
+    const b=document.createElement('button');b.className='stylechip';b.dataset.style=k;const t=document.createElement('canvas');t.width=96;t.height=72;t.getContext('2d').drawImage(photoOut[k],0,0,96,72);
+    b.appendChild(t);b.appendChild(document.createTextNode(l));box.appendChild(b);if(k==='cartoon')paintPrev()}
+  $('#photoBusy').textContent='';$('#photoSave').disabled=false;markStyle()}
+function paintPrev(){const c=$('#photoPrev'),o=photoOut[photoStyle];if(!o)return;c.width=o.width;c.height=o.height;c.getContext('2d').drawImage(o,0,0)}
+function markStyle(){document.querySelectorAll('#photoStyles .stylechip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.style===photoStyle))}
+$('#photoStyles').addEventListener('click',e=>{const b=e.target.closest('.stylechip');if(!b)return;photoStyle=b.dataset.style;paintPrev();markStyle()});
+$('#photoCam').addEventListener('change',e=>{loadPhotoFile(e.target.files[0]);e.target.value=''});
+$('#photoRoll').addEventListener('change',e=>{loadPhotoFile(e.target.files[0]);e.target.value=''});
+$('#photoRetake').addEventListener('click',()=>{$('#photoPick').classList.remove('hide');$('#photoEdit').classList.add('hide')});
+$('#photoSave').addEventListener('click',async()=>{const d=state.dishes.find(x=>x.id===photoDish);if(!d||!photoOut[photoStyle])return;if(!d.libId){save()}
+  if(!d.libId){toast('Could not save that photo.');return}
+  const url=photoOut[photoStyle].toDataURL('image/jpeg',.74);await imgPut(d.libId,url);$('#photoSheet').close();renderMenu();updateLibUI();toast('Photo saved')});
+
+imgLoadAll();
+window.__thyme={openPhoto,loadPhotoFile,cartoonize,illus,imgs:()=>imgs,imgPut,plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic,lib:()=>lib,addFromLib,findLib};
 show(location.hash.slice(1)||'menu');
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
