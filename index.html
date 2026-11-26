@@ -1109,7 +1109,7 @@ const myName=()=>{try{return localStorage.getItem('thyme.myname')||''}catch(e){r
 const setMyName=n=>{try{localStorage.setItem('thyme.myname',n)}catch(e){}};
 const meT=()=>tm.events.find(x=>x.code===tm.current)||null;
 async function loadSb(){if(sb)return sb;if(!teamOn)throw new Error('Shared events are not set up yet.');
-  if(!window.supabase)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';s.onload=ok;s.onerror=()=>no(new Error('Could not load the sharing library. Check your connection.'));document.head.appendChild(s)});
+  if(!window.supabase)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js';s.onload=ok;s.onerror=()=>no(new Error('Could not load the sharing library. Check your connection.'));document.head.appendChild(s)});
   sb=window.supabase.createClient(TCFG.supabaseUrl,TCFG.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});return sb}
 async function rpc(fn,args){const c=await loadSb();const {data,error}=await c.rpc(fn,args);if(error)throw new Error(error.message||'Something went wrong');return data}
 function unsubscribe(){try{if(chan&&sb)sb.removeChannel(chan)}catch(e){}chan=null;clearInterval(pollT)}
