@@ -74,11 +74,11 @@ label{display:grid;gap:6px;font-size:13px;font-weight:700;color:var(--mut)}
 .fab{position:fixed;z-index:6;bottom:calc(96px + env(safe-area-inset-bottom));right:max(18px,calc(50% - 242px));height:60px;padding:0 24px 0 18px;display:none;gap:8px;align-items:center;font-size:17px;box-shadow:0 10px 26px rgba(200,160,20,.4)}
 body[data-view=menu] .fab{display:flex}.fab svg{width:24px;height:24px}
 /* tab bar */
-nav{position:fixed;z-index:7;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,520px);display:grid;grid-template-columns:repeat(3,1fr);padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+nav{position:fixed;z-index:7;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,520px);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 nav button{background:none;box-shadow:none;display:grid;justify-items:center;gap:2px;min-height:60px;padding:6px;color:var(--mut);font-size:12px;border-radius:18px}
 nav button svg{width:26px;height:26px}
 nav button[aria-current=true]{color:var(--ink)}nav button[aria-current=true] .ic{background:var(--butter)}
-nav .ic{width:56px;height:32px;border-radius:999px;display:grid;place-items:center;transition:background .2s}
+nav .ic{width:50px;height:32px;border-radius:999px;display:grid;place-items:center;transition:background .2s}
 /* sheets and toast */
 dialog.sheet{margin:auto auto 0;width:min(520px,100%);max-height:92dvh;border:0;border-radius:30px 30px 0 0;padding:8px 20px 26px;background:var(--card);color:var(--ink);overflow:auto}
 dialog.sheet::backdrop{background:rgba(18,32,24,.5)}
@@ -157,6 +157,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 .orbchips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:520px;margin:0 auto}.orbchips button{background:var(--card);box-shadow:var(--sh)}
 @media(prefers-reduced-motion:reduce){.orbwrap,.halo,.ring,.orb{animation:none!important}}
 </style>
+<script src="config.js"></script>
 </head>
 <body>
 <div class="app">
@@ -198,6 +199,8 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 </div>
 
 <!-- COOK -->
+<div id="v-team" class="screen hide"></div>
+
 <div id="v-cook" class="screen hide">
   <div class="stitle"><h2>Cook</h2><p>Hands-free, one step at a time.</p></div>
   <div class="now" id="nowCard"></div>
@@ -223,6 +226,7 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 <nav aria-label="Main">
   <button data-view="menu"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>Menu</button>
   <button data-view="plan"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>Plan</button>
+  <button data-view="team"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.3c1.8.8 3 2.6 3 5.7"/></svg></span>Together</button>
   <button data-view="cook"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3zM2 11h2M20 11h2M9 4c0 1.5 1.5 1.5 1.5 3M14 4c0 1.5 1.5 1.5 1.5 3"/></svg></span>Cook</button>
 </nav>
 </div>
@@ -238,24 +242,32 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
 </div>
 
 <dialog class="sheet" id="addSheet"><div class="grab"></div>
-  <h2>Add a dish</h2>
+  <div id="addMain"><h2>Add a dish</h2>
   <div id="mineBox" class="hide"><p class="muted" style="margin-bottom:8px">Your saved recipes</p><div class="chips" id="mine"></div><div style="height:12px"></div></div>
   <p class="muted" style="margin-bottom:8px">Starter recipes</p><div class="chips" id="quick"></div>
   <div class="grid" style="margin-top:16px"><label class="wide">Or type a dish name<input id="dname" placeholder="e.g. Garlic roast chicken" autocomplete="off"></label>
     <label>Servings<input id="dserv" type="number" min="1" value="8" inputmode="numeric"></label></div>
   <div class="row"><button class="pri big" id="lookup">Find the recipe</button></div>
-  <div class="row"><button class="big" id="pasteBtn">Paste my own steps</button></div>
+  <div class="row"><button class="big" id="pasteBtn">Paste a recipe</button></div>
   <div id="pasteBox" class="hide" style="margin-top:14px">
-    <label>Your recipe, one step per line<textarea id="pasteTxt" placeholder="1. Preheat oven to 400F&#10;2. Chop the onions and carrots&#10;3. Roast for 45 minutes"></textarea></label>
-    <div class="row"><button class="pri" id="curate">Clean up with Thyme</button><button id="rawAdd">Add as is</button></div></div>
+    <label>Paste the whole recipe from a website, a message or a note. Thyme sorts out the title, ingredients, steps and times.<textarea id="pasteTxt" placeholder="Garlic Chicken&#10;Serves 4&#10;2 lb chicken thighs&#10;3 cloves garlic&#10;1. Preheat oven to 400F&#10;2. Rub chicken with garlic&#10;3. Roast for 45 minutes"></textarea></label>
+    <div class="row"><button class="pri" id="curate">Read my recipe</button><button id="rawAdd">Add without checking</button></div></div>
   <p id="menuMsg" class="muted" role="status" style="margin-top:12px"></p>
-  <div class="row"><button class="x" data-close>Close</button></div>
+  <div class="row"><button class="x" data-close>Close</button></div></div>
+  <div id="parsePrev" class="hide"><h2>Check your recipe</h2>
+    <div id="pvNotes"></div>
+    <div class="grid"><label class="wide">Name<input id="pvName" maxlength="80"></label><label>Servings<input id="pvServ" type="number" min="1" inputmode="numeric"></label></div>
+    <label style="margin-top:12px">Ingredients, one per line<textarea id="pvIng" style="min-height:110px"></textarea></label>
+    <h3 style="font-size:17px;font-weight:800;margin:16px 0 4px">Steps</h3><p class="muted">Each step needs minutes, whether it needs your hands, and any oven or burner. Thyme's guesses are marked.</p>
+    <div id="pvSteps"></div><div class="row" style="margin-top:8px"><button class="sage" id="pvAdd">+ Add a step</button></div>
+    <div class="row" style="margin-top:16px"><button class="pri" id="pvSave">Save recipe</button><button class="sage hide" id="pvAI">Polish with AI</button><button class="x" id="pvBack">Back</button></div></div>
 </dialog>
 
 <dialog class="sheet" id="partySheet"><div class="grab"></div>
   <h2>Dinner and kitchen</h2>
   <div class="grid">
     <label class="wide">Food on the table at<input id="serve" type="datetime-local"></label>
+    <label>Cooks in the kitchen<input id="chefs" type="number" min="1" max="10" inputmode="numeric"></label>
     <label>Burners<input id="burners" type="number" min="1" max="8" inputmode="numeric"></label>
     <label>Oven slots<input id="ovens" type="number" min="1" max="4" inputmode="numeric"></label>
     <label>Extra time for mistakes (%)<input id="buffer" type="number" min="0" max="100" step="5" inputmode="numeric"></label>
@@ -285,6 +297,8 @@ details.help{margin-top:12px;font-size:14px;color:var(--mut)}details.help summar
   <p class="muted" style="margin-top:8px">Recipes live on this device only. Export a backup now and then, or to move them to a new phone.</p>
   <div class="row" style="margin-top:10px"><button class="big" data-close>Close</button></div>
 </dialog>
+
+<dialog class="sheet" id="assignSheet"><div class="grab"></div><h2 id="assignTitle">Who is doing this?</h2><div id="assignList"></div><div class="row" style="margin-top:12px"><button class="x" data-close>Cancel</button></div></dialog>
 
 <dialog class="sheet" id="shopSheet"><div class="grab"></div>
   <h2>Shopping list</h2><p class="muted" style="margin-bottom:10px">Everything on your menu, added up. Tap to tick things off.</p>
@@ -480,10 +494,10 @@ const save=()=>{try{localStorage.setItem('thyme.v1',JSON.stringify(state))}catch
 const color=d=>COLORS[state.dishes.indexOf(d)%COLORS.length];
 
 /* ---------- views ---------- */
-const VIEWS=['menu','plan','cook'];
-function show(v){if(!VIEWS.includes(v))v='menu';document.body.dataset.view=v;scrollTo(0,0);VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hide',x!==v));
+const VIEWS=['menu','plan','cook','team'];
+function show(v){if(/^join-/i.test(v)){pendingJoin=v.slice(5).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);v='team'}if(!VIEWS.includes(v))v='menu';document.body.dataset.view=v;scrollTo(0,0);VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hide',x!==v));
   document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===v));
-  if(v==='plan')renderPlan();if(v==='cook')renderCook();if(v==='menu')renderMenu()}
+  if(v==='team'){if(pendingJoin&&meT()&&meT().code!==pendingJoin){/* new invite: show join form */unsubscribe();tm.current=null;evs=null}if(pendingJoin&&tm.events.some(x=>x.code===pendingJoin)){tm.current=pendingJoin;pendingJoin='';evs=null}renderTeam();if(meT()){if(!chan)subscribe(meT().code);refreshEvent()}}if(v==='plan')renderPlan();if(v==='cook')renderCook();if(v==='menu')renderMenu()}
 $('#keySave').addEventListener('click',()=>{const v=$('#keyIn').value.trim();if(!/^sk-ant-/.test(v)){$('#keyMsg').textContent='That does not look like an Anthropic key (it starts with sk-ant-).';return}try{localStorage.setItem(KEY,v)}catch(e){}$('#keyIn').value='';refreshAI();$('#keyMsg').textContent='Saved on this device.'});
 $('#keyDel').addEventListener('click',()=>{try{localStorage.removeItem(KEY)}catch(e){}refreshAI();$('#keyMsg').textContent='Key removed.'});
 refreshAI();
@@ -491,7 +505,8 @@ document.querySelectorAll('[data-view],[data-go]').forEach(b=>b.addEventListener
 addEventListener('hashchange',()=>show(location.hash.slice(1)));
 
 /* ---------- menu ---------- */
-const cfgIds=['serve','burners','ovens','buffer','tail'];
+state.cfg.chefs=state.cfg.chefs||1;
+const cfgIds=['serve','chefs','burners','ovens','buffer','tail'];
 cfgIds.forEach(k=>{const el=$('#'+k);el.value=state.cfg[k];el.addEventListener('change',()=>{state.cfg[k]=k==='serve'?el.value:Math.max(0,+el.value||0);save();renderHero()})});
 let toastT;const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),3200)};
 const msg=t=>{$('#menuMsg').textContent=t;toast(t)};
@@ -568,32 +583,104 @@ $('#lookup').addEventListener('click',async e=>{
   finally{busy(e.target,false)}
 });
 
-function heuristic(txt,name,serv){
-  const isIng=l=>/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.\d+|\d+|[¼½¾⅓⅔⅛])\s*(?:-\s*)?(cups?|tbsp|tbs|tsp|tablespoons?|teaspoons?|lbs?|pounds?|oz|ounces?|g|grams?|kg|ml|l|cloves?|sticks?|cans?|pinch|large|medium|small|whole|eggs?)\b/i.test(l)&&l.length<70&&!/[.!]$/.test(l);
-  const all=[];let sec='';txt.split(/\n+/).forEach(l=>{l=l.trim();if(!l)return;const h=l.match(/^(ingredients|directions|instructions|method|steps|preparation)\s*:?$/i);if(h){sec=/ingredients/i.test(h[1])?'ing':'steps';return}
-    if(sec==='ing'||isIng(l))all.push({ing:true,t:l.replace(/^\s*[-*•]\s*/,'')});else l.split(/(?<=\.)\s+(?=[A-Z])/).forEach(x=>all.push({t:x.replace(/^\s*(\d+[.)]|[-*•])\s*/,'').trim()}))});
-  const lines=all.filter(x=>!x.ing).map(x=>x.t).filter(l=>l.length>2),ings=all.filter(x=>x.ing).map(x=>x.t);
-  return {id:nid(),name:name||'My recipe',servings:serv,ing:ings,notes:['Thyme guessed the minutes and hands-on/hands-off for these steps. Please check them.'],steps:lines.map(t=>{
-    const lo=t.toLowerCase();const m=lo.match(/(\d+)(?:\s*(?:-|to)\s*(\d+))?\s*(hours?|hrs?|minutes?|mins?)/);
-    let min=m?(+(m[2]||m[1]))*(/h/.test(m[3])?60:1):0;
-    const passive=/\b(bake|roast|simmer|rest|chill|marinate|boil|rise|cool|refrigerate|preheat|braise)\b/.test(lo);
-    const equip=/\b(bake|roast|oven|broil|preheat)\b/.test(lo)?'oven':/\b(simmer|boil|saut|fry|sear|stove|skillet|pan|pot|braise)\w*/.test(lo)?'burner':'none';
-    return {id:nid(),text:t.slice(0,300),min:Math.max(1,min||(passive?15:5)),kind:passive?'passive':'active',equip}})};
-}
-$('#rawAdd').addEventListener('click',()=>{const t=$('#pasteTxt').value.trim();if(!t)return;state.dishes.push(heuristic(t,$('#dname').value.trim(),+$('#dserv').value||8));save();renderMenu();$('#pasteTxt').value='';msg('Added your steps.')});
-$('#curate').addEventListener('click',async e=>{
-  const t=$('#pasteTxt').value.trim(),name=$('#dname').value.trim(),serv=+$('#dserv').value||8;if(!t){msg('Paste your steps first.');return}
-  if(!sample){state.dishes.push(heuristic(t,name,serv));save();renderMenu();msg('Thyme split and timed your steps with simple rules. Please check them, or add an Anthropic key under Settings for a smarter clean-up.');return}
-  busy(e.target,true,'Cleaning up…');
-  try{const r=await sample.json(`You are Thyme, a cooking planner. The cook pasted their own recipe${name?` for "${name}"`:''}, serving ${serv}. Clean it up for a timed, read-aloud plan WITHOUT changing their method, ingredients or quantities: split combined steps, put them in a workable order, estimate minutes where missing, and pull out ingredients. In "notes", list up to 4 short suggestions or problems you noticed (missing temperature, unclear timing, a step that should start earlier). Do not add techniques they did not write.\n${STEP_SCHEMA}\n\nTHEIR RECIPE:\n${t}`,{modelTier:'default'});
-    state.dishes.push(normDish(r,name||'My recipe',serv));save();renderMenu();$('#pasteTxt').value='';msg('Cleaned up your recipe. Thyme\'s notes are on the dish card.')}
-  catch(err){state.dishes.push(heuristic(t,name,serv));save();renderMenu();msg('Clean-up failed, so Thyme added your steps with simple rules. Please check them.')}
-  finally{busy(e.target,false)}
-});
+/* ---------- recipe parser: paste any recipe text, no AI needed ---------- */
+const VERBS=new Set('preheat heat bring cook add stir mix whisk combine fold pour place put season sprinkle toss chop dice slice mince peel cut trim wash rinse drain bake roast broil grill saute sauté fry sear brown simmer boil steam braise rest cool chill refrigerate freeze marinate let allow cover remove transfer serve garnish top spread brush rub pat dry beat blend puree purée mash knead roll shape form divide arrange layer stuff fill drizzle squeeze zest grate shred crush smash dissolve melt soften set reduce deglaze skim strain sift measure line grease oil spray carve return taste adjust check turn flip toast warm reheat prepare gather start continue repeat finish plate soak steep proof leave sauté stir-fry scrape scatter cream whip mound press pierce prick poke wrap unwrap open crack separate bloom dredge coat baste ladle spoon swirl tent dot dust sift cube halve quarter core seed pit devein score shuck thaw defrost pulse process mix-in lower raise increase decrease pull take move keep hold garnish enjoy'.split(' '));
+const HDR_ING=/^(ingredients?|what you.?ll need|you.?ll need|shopping list)\s*:?$/i,HDR_STEP=/^(directions?|instructions?|method|steps?|preparation|procedure|how to make( it)?|to make)\s*:?$/i,HDR_NOTE=/^(notes?|tips?|cook'?s notes?|nutrition.*|storage|variations?)\s*:?$/i;
+const isIngLine=l=>/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.\d+|\d+|[¼½¾⅓⅔⅛])\s*(?:-\s*)?(cups?|tbsp|tbs|tsp|tablespoons?|teaspoons?|lbs?|pounds?|oz|ounces?|g|grams?|kg|ml|l|cloves?|sticks?|cans?|pinch|large|medium|small|whole|eggs?|bunch|slices?|heads?|sprigs?|packages?|jars?|bottles?)\b/i.test(l)&&l.length<90&&!/[.!]$/.test(l)||/^(a |an |one )?(pinch|dash|handful|splash|drizzle) of\b/i.test(l)||/^(salt|pepper|kosher salt|black pepper)\b.*\b(to taste|as needed)\b/i.test(l);
+const looksIng=(l,raw)=>l.length<70&&!/[.!?]$/.test(l)&&!startsWithVerb(l.replace(/^[\d\s\/.¼½¾]+/,''))&&(/^[-*•●▪◦]/.test(raw)||(/^\d+(\s+\d\/\d)?\s+[a-z]/i.test(l)&&!/^\d+\s*[.):-]\s/.test(raw)&&!/\b(minutes?|mins?|hours?|degrees|°)\b/i.test(l)));
+function startsWithVerb(s){const w=s.toLowerCase().replace(/^(then|next|now|meanwhile|once done|while (that|it) [a-z ]+,|and)\s+/,'').match(/^[a-zà-ÿ'-]+/);return !!w&&VERBS.has(w[0])}
+function parseTimeMin(s){
+  s=s.replace(/(\d+)\s*(?:hours?|hrs?|hr|h)\s*(?:and\s*)?(\d+)\s*(?:minutes?|mins?|min|m)\b/gi,(m,h,mm)=>`${+h*60+ +mm} minutes`);
+  let best=0,pref=0,sum=0,cnt=0;const re=/(\d+(?:\.\d+)?|\d+\s+\d\/\d|\d\/\d|[¼½¾])\s*(?:(?:-|–|to|or)\s*(\d+(?:\.\d+)?))?\s*(?:more\s+|additional\s+|extra\s+)?(hours?|hrs?|hr|h|minutes?|mins?|min|m|seconds?|secs?)\b/gi;let m;
+  const nv=x=>{x=String(x).replace('¼','.25').replace('½','.5').replace('¾','.75');const mm=x.match(/^(\d+)\s+(\d)\/(\d)$/);if(mm)return +mm[1]+mm[2]/mm[3];const f=x.match(/^(\d)\/(\d)$/);if(f)return f[1]/f[2];return parseFloat(x)};
+  while((m=re.exec(s))){const v=nv(m[2]||m[1]),u=m[3].toLowerCase();let min=/^h/.test(u)?v*60:/^s/.test(u)?Math.max(1,v/60):v;if(!isFinite(min)||min<=0)continue;
+    const before=s.slice(Math.max(0,m.index-12),m.index).toLowerCase();const p=/(for|about|another|until|roughly|approximately)\s*$/.test(before)?1:0;
+    sum+=min;cnt++;if(p>pref||(p===pref&&min>best)){best=min;pref=p}}
+  if(cnt>1&&/\b(more|additional|another|then|plus|further)\b/i.test(s))best=sum;
+  if(!best){if(/\bhalf an hour\b/i.test(s))best=30;else if(/\b(an|one) hour\b/i.test(s))best=60;else if(/\bovernight\b/i.test(s))best=480}
+  return Math.round(best)}
+function classifyStep(t){
+  const lo=t.toLowerCase();let min=parseTimeMin(t),guessed=false;
+  const lead=(lo.replace(/^(then|next|now|meanwhile|and)\s+/,'').match(/^[a-zà-ÿ'-]+(?: [a-z]+)?/)||[''])[0];
+  const passiveLead=/^(preheat|bake|roast|simmer|boil|bring|cover|rest|let|chill|refrigerate|marinate|cool|freeze|allow|steep|soak|proof|braise|broil|grill|set aside|leave|slow|chill|thaw|defrost|rise|reduce heat|turn off)\b/.test(lead);
+  let kind='active';
+  if(passiveLead&&(min>=5||/preheat|rest|let|chill|refrigerate|marinate|cool|bring|cover|set aside|soak|thaw|steep|proof/.test(lead)))kind='passive';
+  else if(/^cook\b/.test(lead)&&min>=10&&!/\b(stir|whisk|toss|flip|turn)\b/.test(lo))kind='passive';
+  else if(/\b(bake|roast|simmer)\b/.test(lead))kind='passive';
+  if(!min){guessed=true;
+    if(/preheat/.test(lo))min=15;else if(/bring .*boil/.test(lo))min=10;else if(/\b(chill|refrigerate|marinate)\b/.test(lo))min=60;else if(/\b(rest|cool|set aside|let)\b/.test(lead))min=10;
+    else if(/\b(chop|dice|slice|mince|peel|cut|trim|wash|prep|grate|shred|core|seed)\b/.test(lead))min=10;
+    else if(/\b(serve|plate|garnish|carve|arrange|top|drizzle)\b/.test(lead))min=5;
+    else if(/\b(mix|stir|whisk|combine|add|fold|toss|season|pour|sprinkle|spread|brush|rub)\b/.test(lead))min=4;
+    else min=kind==='passive'?15:5}
+  if(kind==='active'&&min>=15&&/\b(simmer|bake|roast|braise|chill|refrigerate|marinate|rest|rise|proof|slow cook)\b/.test(lo)&&!/^(stir|whisk|knead|chop|dice|slice|mix|beat|fold)\b/.test(lead))kind='passive';
+  let equip='none';
+  if(/\b(preheat|bake|roast|broil|oven)\b/.test(lo)&&(kind==='passive'||/preheat|bake|roast|broil/.test(lo)))equip='oven';
+  else if(/\b(simmer|boil|sauté|saute|sautéed|fry|sear|brown|skillet|saucepan|stockpot|pot|stovetop|stove|burner|(low|medium|high)[- ]?(low|high)? heat|heat (the )?(oil|butter)|wok|griddle|reduce)\b/.test(lo))equip='burner';
+  if(kind==='active'&&equip==='oven'&&!/preheat|bake|roast|broil/.test(lead))equip='none';
+  if(equip==='none'&&(/\b(cook|cooked|cooking)\b/.test(lo)&&!/\b(cooled|cool)\b/.test(lo)&&/^(cook|add|stir|pour|toss|return|continue)\b/.test(lead)||(kind==='passive'&&/^cook\b/.test(lead))))equip='burner';
+  return {min:Math.min(1440,Math.max(1,min)),kind,equip,guessed}}
+function parseRecipe(txt,fbName='',fbServ=8){
+  const lines=String(txt).replace(/\r/g,'').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  let name='',serv=null,sec='',ing=[],notes=[],chunks=[],seenAny=false;const meta=[];
+  const stripNum=l=>l.replace(/^\s*(?:step\s*)?\d+\s*[.):-]\s+/i,'').replace(/^\s*[-*•●▪◦]\s*/,'').trim();
+  for(let l of lines){
+    let m;
+    if((m=l.match(/^(serves|servings?|yields?|makes|portions)\s*:?\s*(\d+)/i))||(l.length<40&&(m=l.match(/\b(\d+)\s*servings?\b/i)))){serv=+(m[2]||m[1]);continue}
+    if(/^(prep|cook|total|bake|active|ready in|chill|rest)(ing)?( time)?\s*:/i.test(l)){meta.push(l);continue}
+    if(HDR_ING.test(l)){sec='ing';seenAny=true;continue}if(HDR_STEP.test(l)){sec='steps';seenAny=true;continue}if(HDR_NOTE.test(l)){sec='notes';seenAny=true;continue}
+    if(!name&&!seenAny&&l.length<=80&&!isIngLine(l)&&!/[.!?]$/.test(l)&&!/^\d+\s*[.)]/.test(l)&&!/^[-*•]/.test(l)){name=l.replace(/\s*recipe$/i,'');seenAny=true;continue}
+    seenAny=true;
+    if(sec==='notes'){notes.push(stripNum(l));continue}
+    if(sec==='ing'||(sec!=='steps'&&(isIngLine(stripNum(l))||looksIng(stripNum(l),l)))){const x=stripNum(l);if(/:$/.test(x)&&x.length<40)continue;ing.push(x);continue}
+    if(/^for the [^.]{2,40}:?$/i.test(l)||/^[A-Z][A-Za-z ]{2,30}:$/.test(l))continue;
+    chunks.push({t:stripNum(l),numbered:/^\s*(?:step\s*)?\d+\s*[.):-]\s+/i.test(l)||/^\s*[-*•●▪◦]/.test(l)});
+  }
+  // chunks -> steps: split into sentences, keep verb-led sentences as their own steps, merge the rest into the step before
+  const steps=[];
+  chunks.forEach(c=>{const sents=c.t.split(/(?<=[a-z0-9)°%"'][.!?])\s+(?=[A-Z0-9"“])/).map(x=>x.trim()).filter(Boolean);
+    sents.forEach((x,i)=>{const joinable=steps.length&&(i>0||!c.numbered&&!startsWithVerb(x)&&steps[steps.length-1].t.length<220);
+      if(joinable&&(!startsWithVerb(x)||x.length<10))steps[steps.length-1].t+=' '+x;else steps.push({t:x})})});
+  const out=steps.slice(0,40).map(s=>{const t=s.t.replace(/\s+/g,' ').trim().slice(0,300),c=classifyStep(t);return {text:t,min:c.min,kind:c.kind,equip:c.equip,guessed:c.guessed}}).filter(s=>s.text.length>2);
+  const g=out.filter(s=>s.guessed).length;
+  if(g)notes.unshift(`${g} step${g>1?'s':''} had no time in the recipe, so Thyme guessed. Please check the minutes.`);
+  if(!ing.length)notes.unshift('No ingredient list found, so amount questions and the shopping list will be empty. Add ingredients below if you like.');
+  if(meta.length)notes.push(meta.join(' · '));
+  return {name:name||fbName||'My recipe',servings:serv||fbServ,ing:ing.slice(0,80).map(x=>x.slice(0,120)),notes:notes.slice(0,6),steps:out}}
+function dishFromParsed(p){return {id:nid(),name:p.name,servings:p.servings,ing:p.ing,notes:p.notes,steps:p.steps.map(({text,min,kind,equip})=>({id:nid(),text,min,kind,equip}))}}
+function heuristic(txt,name,serv){return dishFromParsed(parseRecipe(txt,name,serv))}
+$('#rawAdd').addEventListener('click',()=>{const t=$('#pasteTxt').value.trim();if(!t)return;state.dishes.push(heuristic(t,$('#dname').value.trim(),+$('#dserv').value||8));save();renderMenu();$('#pasteTxt').value='';msg('Added your recipe.')});
+/* preview: parse locally, let the cook edit, then save */
+let prev=null,prevRaw='';
+function openPrev(p,raw){prev=p;if(raw!=null)prevRaw=raw;$('#addMain').classList.add('hide');$('#parsePrev').classList.remove('hide');$('#pvAI').classList.toggle('hide',!sample);renderPrev(true);$('#addSheet').scrollTop=0}
+function closePrev(){$('#parsePrev').classList.add('hide');$('#addMain').classList.remove('hide');prev=null}
+function renderPrev(full){
+  if(full){$('#pvName').value=prev.name;$('#pvServ').value=prev.servings;$('#pvIng').value=prev.ing.join('\n');
+    $('#pvNotes').innerHTML=(prev.notes||[]).map(n=>`<div class="note">${esc(n)}</div>`).join('')}
+  $('#pvSteps').innerHTML=prev.steps.map((x,i)=>`<div class="step" data-pv="${i}"><div class="top"><span class="n">${i+1}</span><textarea data-f="text" rows="2" aria-label="Step ${i+1}">${esc(x.text)}</textarea></div>
+    <div class="ctl"><input type="number" min="1" data-f="min" value="${esc(x.min)}" aria-label="Minutes" inputmode="numeric"><span class="muted">min${x.guessed?' · guessed':''}</span>
+    <select data-f="kind" aria-label="Hands-on or hands-off"><option value="active"${x.kind==='active'?' selected':''}>Hands-on</option><option value="passive"${x.kind==='passive'?' selected':''}>Hands-off</option></select>
+    <select data-f="equip" aria-label="Equipment"><option value="none">No equipment</option><option value="burner"${x.equip==='burner'?' selected':''}>Burner</option><option value="oven"${x.equip==='oven'?' selected':''}>Oven</option></select>
+    <button class="x" data-pa="up" aria-label="Move up">↑</button><button class="x" data-pa="del" aria-label="Delete step">✕</button></div></div>`).join('')||'<p class="muted">No steps found. Add one below.</p>'}
+$('#pvSteps').addEventListener('change',e=>{const f=e.target.dataset.f;if(!f)return;const x=prev.steps[+e.target.closest('[data-pv]').dataset.pv];x[f]=f==='min'?Math.max(1,Math.round(+e.target.value||1)):e.target.value;if(f==='min')x.guessed=false;if(f==='min')renderPrev()});
+$('#pvSteps').addEventListener('click',e=>{const a=e.target.dataset.pa;if(!a)return;const i=+e.target.closest('[data-pv]').dataset.pv;if(a==='del')prev.steps.splice(i,1);if(a==='up'&&i>0)[prev.steps[i-1],prev.steps[i]]=[prev.steps[i],prev.steps[i-1]];renderPrev()});
+$('#pvAdd').addEventListener('click',()=>{prev.steps.push({text:'',min:5,kind:'active',equip:'none'});renderPrev()});
+$('#pvBack').addEventListener('click',closePrev);
+$('#addSheet').addEventListener('close',closePrev);
+$('#pvSave').addEventListener('click',()=>{if(!prev)return;const steps=prev.steps.filter(x=>String(x.text).trim()).map(x=>({id:nid(),text:String(x.text).trim().slice(0,300),min:Math.max(1,Math.round(+x.min||5)),kind:x.kind==='passive'?'passive':'active',equip:['oven','burner'].includes(x.equip)?x.equip:'none'}));
+  if(!steps.length){toast('Add at least one step first.');return}
+  const d={id:nid(),name:$('#pvName').value.trim()||'My recipe',servings:Math.max(1,+$('#pvServ').value||8),ing:$('#pvIng').value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,80),notes:(prev.notes||[]).filter(n=>!/^\d+ steps? had no time|^No ingredient list/.test(n)),steps};
+  state.dishes.push(d);save();renderMenu();$('#pasteTxt').value='';closePrev();if($('#addSheet').open)$('#addSheet').close();toast('Saved '+d.name)});
+$('#pvAI').addEventListener('click',async e=>{if(!sample||!prevRaw)return;busy(e.target,true,'Polishing…');
+  try{const r=await sample.json(`You are Thyme, a cooking planner. The cook pasted their own recipe. Clean it up for a timed, read-aloud plan WITHOUT changing their method, ingredients or quantities: split combined steps, put them in a workable order, estimate minutes where missing, and pull out ingredients. In "notes", list up to 4 short suggestions or problems you noticed. Do not add techniques they did not write.\n${STEP_SCHEMA}\n\nTHEIR RECIPE:\n${prevRaw}`,{modelTier:'default'});
+    const n=normDish(r,$('#pvName').value||'My recipe',+$('#pvServ').value||8);prev={name:n.name,servings:n.servings,ing:n.ing,notes:n.notes,steps:n.steps};renderPrev(true);toast('Polished with AI. Check it over.')}
+  catch(err){toast('AI polish did not work. Your parsed version is unchanged.')}finally{busy(e.target,false)}});
+$('#curate').addEventListener('click',()=>{const t=$('#pasteTxt').value.trim(),name=$('#dname').value.trim(),serv=+$('#dserv').value||8;if(!t){msg('Paste your recipe first.');return}
+  openPrev(parseRecipe(t,name,serv),t)});
 
 /* ---------- scheduler: work backward from serve time ---------- */
-function plan(){
-  const cfg=state.cfg,ds=state.dishes.filter(d=>d.steps.length);
+function plan(src=state){
+  const cfg=src.cfg,ds=src.dishes.filter(d=>d.steps.length),chefs=Math.max(1,Math.min(10,+cfg.chefs||1));
   const tasks=[];
   ds.forEach(d=>{let before=0;d.steps.forEach((s,i)=>{const dur=Math.max(1,Math.round(s.kind==='active'?s.min*(1+(+cfg.buffer||0)/100):s.min));tasks.push({dish:d,d:d.id,i,s,dur,before});before+=dur})});
   const cap={oven:Math.max(1,+cfg.ovens||1),burner:Math.max(1,+cfg.burners||1),none:1e9};
@@ -602,12 +689,12 @@ function plan(){
   // Reverse list scheduling: R = minutes before "done" time. Place each dish's LAST step first, so food finishes as close to serving as possible.
   while(placed.length<tasks.length&&R<20000){
     const live=placed.filter(t=>t.rs<=R&&R<t.re);
-    let chef=live.some(t=>t.s.kind==='active');const used={oven:0,burner:0,none:0};live.forEach(t=>used[t.s.equip||'none']++);
+    let nAct=live.filter(t=>t.s.kind==='active').length;const used={oven:0,burner:0,none:0};live.forEach(t=>used[t.s.equip||'none']++);
     const cands=ds.filter(d=>nxt[d.id]>=0&&ready[d.id]<=R).map(d=>tasks.find(t=>t.d===d.id&&t.i===nxt[d.id]))
       .sort((a,b)=>(b.before+b.dur)-(a.before+a.dur)); // longest remaining chain goes first
     for(const t of cands){const eq=t.s.equip||'none';
-      if(t.s.kind==='active'&&chef)continue;if(used[eq]>=cap[eq])continue;
-      t.rs=R;t.re=R+t.dur;placed.push(t);if(t.s.kind==='active')chef=true;used[eq]++;nxt[t.d]--;ready[t.d]=t.re}
+      if(t.s.kind==='active'&&nAct>=chefs)continue;if(used[eq]>=cap[eq])continue;
+      t.rs=R;t.re=R+t.dur;placed.push(t);if(t.s.kind==='active')nAct++;used[eq]++;nxt[t.d]--;ready[t.d]=t.re}
     R++;
   }
   const total=placed.length?Math.max(...placed.map(t=>t.re)):0;
@@ -1012,8 +1099,116 @@ $('#photoSave').addEventListener('click',async()=>{const d=state.dishes.find(x=>
   if(!d.libId){toast('Could not save that photo.');return}
   const url=photoOut[photoStyle].toDataURL('image/jpeg',.74);await imgPut(d.libId,url);$('#photoSheet').close();renderMenu();updateLibUI();toast('Photo saved')});
 
+
+/* ---------- Together: shared events (Supabase). Helpers join by code or link; progress syncs live. ---------- */
+const TCFG=window.THYME_CONFIG||{},teamOn=!!(TCFG.supabaseUrl&&TCFG.supabaseAnonKey);
+let sb=null,chan=null,tm={events:[],current:null},evs=null,evErr='',pollT=null,pendingJoin='',srvOff=0,teamBusy=false,rtT=null;const alerted=new Set();
+try{Object.assign(tm,JSON.parse(localStorage.getItem('thyme.team')||'{}'))}catch(e){}
+const saveTm=()=>{try{localStorage.setItem('thyme.team',JSON.stringify(tm))}catch(e){}};
+const myName=()=>{try{return localStorage.getItem('thyme.myname')||''}catch(e){return ''}};
+const setMyName=n=>{try{localStorage.setItem('thyme.myname',n)}catch(e){}};
+const meT=()=>tm.events.find(x=>x.code===tm.current)||null;
+async function loadSb(){if(sb)return sb;if(!teamOn)throw new Error('Shared events are not set up yet.');
+  if(!window.supabase)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';s.onload=ok;s.onerror=()=>no(new Error('Could not load the sharing library. Check your connection.'));document.head.appendChild(s)});
+  sb=window.supabase.createClient(TCFG.supabaseUrl,TCFG.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});return sb}
+async function rpc(fn,args){const c=await loadSb();const {data,error}=await c.rpc(fn,args);if(error)throw new Error(error.message||'Something went wrong');return data}
+function unsubscribe(){try{if(chan&&sb)sb.removeChannel(chan)}catch(e){}chan=null;clearInterval(pollT)}
+function subscribe(code){unsubscribe();loadSb().then(c=>{chan=c.channel('event:'+code);chan.on('broadcast',{event:'changed'},()=>{clearTimeout(rtT);rtT=setTimeout(refreshEvent,250)}).subscribe()}).catch(()=>{});
+  pollT=setInterval(()=>{if(!document.hidden)refreshEvent()},12000)}
+async function refreshEvent(){const m=meT();if(!m)return;
+  try{const r=await rpc('event_state',{p_code:m.code});evs=r;srvOff=Date.parse(r.server_time)-Date.now()||0;evErr=r.members.some(x=>x.id===m.memberId)?'':'You are no longer part of this event.'}
+  catch(e){evErr=e.message;if(/not found|expired/i.test(e.message))evs=null}
+  if(!$('#v-team').classList.contains('hide'))renderTeam()}
+const nowS=()=>Date.now()+srvOff;
+const edishes=()=>((evs&&evs.event.dishes)||[]).map(d=>({id:String(d.id),name:String(d.name||'Dish').slice(0,80),servings:d.servings,steps:(d.steps||[]).map(s=>({text:String(s.text||'').slice(0,300),min:Math.max(1,+s.min||5),kind:s.kind==='passive'?'passive':'active',equip:['oven','burner'].includes(s.equip)?s.equip:'none'}))}));
+function eplan(){if(!evs)return null;const c=Object.assign({burners:4,ovens:1,buffer:15,tail:10,chefs:1},evs.event.cfg||{});c.serve=evs.event.serve_at||c.serve;return plan({cfg:c,dishes:edishes()})}
+const tkey=t=>t.d+':'+t.i;
+const tState=k=>((evs&&evs.tasks)||[]).find(x=>x.task_key===k)||{task_key:k,assignee:null,status:'pending'};
+const memberOf=id=>((evs&&evs.members)||[]).find(x=>x.id===id);
+const dishColor=id=>COLORS[Math.max(0,edishes().findIndex(d=>d.id===id))%COLORS.length];
+function localTask(k,patch){if(!evs)return;let t=evs.tasks.find(x=>x.task_key===k);if(!t){t={task_key:k,assignee:null,status:'pending'};evs.tasks.push(t)}Object.assign(t,patch)}
+async function teamAct(fn,args,after){if(teamBusy)return;teamBusy=true;try{await rpc(fn,args);try{chan&&chan.send({type:'broadcast',event:'changed',payload:{}})}catch(e){}if(after)after()}catch(e){toast(e.message)}teamBusy=false;await refreshEvent()}
+const A=()=>{const m=meT();return {p_code:m.code,p_member_token:m.memberToken}};
+function menuPayload(){return state.dishes.filter(d=>d.steps.length).map(d=>({id:d.id,name:d.name,servings:d.servings,ing:(d.ing||[]).slice(0,80),steps:d.steps.map(({text,min,kind,equip})=>({text,min,kind,equip}))}))}
+function cfgPayload(){const s=new Date(state.cfg.serve);return {burners:+state.cfg.burners||4,ovens:+state.cfg.ovens||1,buffer:+state.cfg.buffer||0,tail:+state.cfg.tail||0,chefs:+state.cfg.chefs||1,serve:isNaN(s)?null:s.toISOString()}}
+function inviteUrl(code){return location.origin+location.pathname+'#join-'+code}
+async function shareEvent(){const m=meT();if(!m)return;const url=inviteUrl(m.code),text=`Join me cooking ${m.title||'dinner'} on Thyme. Code ${m.code}`;
+  try{if(navigator.share){await navigator.share({title:'Thyme',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text+'\n'+url);toast('Invite copied')}catch(e){toast('Code: '+m.code)}}
+/* screens */
+function renderTeam(){
+  const root=$('#v-team'),head='<div class="stitle"><h2>Together</h2><p>Cook with helpers, everyone on their own phone.</p></div>';
+  if(!teamOn){root.innerHTML=head+'<div class="card empty"><h3>Shared events are not switched on yet</h3><p>They need a free Supabase project. The five setup steps are in SETUP_SUPABASE.md in the Thyme repo.</p></div>';return}
+  const m=meT();
+  if(!m){const n=state.dishes.filter(d=>d.steps.length).length;
+    root.innerHTML=head+`<div class="card"><h3 style="font-size:20px;font-weight:900">Host a dinner</h3><p class="muted" style="margin:4px 0 12px">Shares your current menu (${n} dish${n===1?'':'es'}) and time. Helpers join with a code or link.</p>
+      <div class="grid"><label class="wide">Event name<input id="hostTitle" value="Dinner" maxlength="60"></label><label class="wide">Your name<input id="hostName" value="${esc(myName())}" maxlength="40" placeholder="e.g. Kim"></label></div>
+      <button class="pri big" id="hostGo" style="margin-top:12px"${n?'':' disabled'}>Start a shared event</button>${n?'':'<p class="muted" style="margin-top:8px">Add at least one dish on the Menu first.</p>'}</div>
+      <div class="card" style="margin-top:14px"><h3 style="font-size:20px;font-weight:900">Join with a code</h3>
+      <div class="grid" style="margin-top:10px"><label>Code<input id="joinCode" value="${esc(pendingJoin)}" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="8 letters" style="text-transform:uppercase;letter-spacing:.15em"></label><label>Your name<input id="joinName" value="${esc(myName())}" maxlength="40"></label></div>
+      <button class="pri big" id="joinGo" style="margin-top:12px">Join</button></div>`
+      +(tm.events.length?`<h3 class="sub">Your events</h3>`+tm.events.map(x=>`<div class="libitem"><div style="flex:1"><b>${esc(x.title||'Dinner')}</b><div class="sm muted">Code ${esc(x.code)}${x.isHost?' · you are the host':''}</div></div><button class="sage" data-openev="${esc(x.code)}">Open</button></div>`).join(''):'');
+    return}
+  if(!evs){root.innerHTML=head+`<div class="card empty"><h3>${evErr?esc(evErr):'Loading your event…'}</h3>${evErr?'<button class="sage" id="evBack">Back</button>':''}</div>`;return}
+  const p=eplan(),mem=evs.members,me=mem.find(x=>x.id===m.memberId),isHost=!!(me&&me.is_host);
+  const pcs=p&&p.tasks?p.tasks:[];
+  const mineT=pcs.filter(t=>{const s=tState(tkey(t));return s.assignee===m.memberId&&s.status!=='done'}).sort((a,b)=>a.start-b.start);
+  const done=pcs.filter(t=>tState(tkey(t)).status==='done').length;
+  const fmtS=ms=>fmtT(ms);
+  root.innerHTML=head+`<div class="hero" style="cursor:default"><div class="k">${esc(evs.event.title)}</div><div class="big" style="letter-spacing:.14em;font-size:clamp(34px,11vw,52px)">${esc(evs.event.code)}</div>
+    <div class="d">Dinner at ${p?fmtS(p.serve):'—'} · ${done} of ${pcs.length} steps done</div><div class="st">${mem.map(x=>`<span class="pill"><span class="chip" style="--c:${COLORS[(+x.color||0)%COLORS.length]}">${esc(x.name)}${x.id===m.memberId?' (you)':''}${x.is_host?' · host':''}</span></span>`).join('')}</div></div>
+    <div class="row" style="margin-top:12px"><button class="pri" id="evShare">Invite helpers</button><button class="sage" id="evCopy">Copy code</button></div>${evErr?`<div class="note" style="margin-top:12px">${esc(evErr)}</div>`:''}
+    <h3 class="sub">Your turn</h3>`+(mineT.length?mineT.slice(0,3).map(t=>{const s=tState(tkey(t)),late=s.status==='pending'&&t.start<nowS()-5*60000;
+      return `<div class="card" style="margin-bottom:10px"><div class="chip" style="--c:${dishColor(t.d)}">${esc(t.dish.name)}</div><div style="font-weight:800;font-size:18px;margin:6px 0">${esc(t.s.text)}</div>
+      <div class="muted" style="margin-bottom:10px">${s.status==='running'?'In progress since '+fmtS(Date.parse(s.started_at)||nowS()):(late?'Planned for '+fmtS(t.start)+' · running late':'Planned for '+fmtS(t.start))} · ${fmtD(t.dur)}</div>
+      ${s.status==='running'?`<button class="pri big" data-tk="${esc(tkey(t))}" data-st="done">Done</button>`:`<button class="pri big" data-tk="${esc(tkey(t))}" data-st="running">Start this step</button>`}</div>`}).join(''):'<div class="card"><p class="muted">Nothing is assigned to you right now. Take a step below, or ask the host to assign you some.</p></div>')
+    +`<h3 class="sub">Assign a whole dish</h3><div class="chips">${edishes().map(d=>`<button data-adish="${esc(d.id)}">${esc(d.name)}</button>`).join('')}</div>
+    <h3 class="sub">Everything, in order</h3><ol class="tl">`+pcs.slice().sort((a,b)=>a.start-b.start).map(t=>{const k=tkey(t),s=tState(k),a=memberOf(s.assignee);
+      return `<li style="--c:${dishColor(t.d)}"><time>${fmtS(t.start)}</time><div style="${s.status==='done'?'opacity:.55':''}"><span${s.status==='done'?' style="text-decoration:line-through"':''}>${esc(t.s.text)}</span>
+      <div class="meta"><span class="chip" style="--c:${dishColor(t.d)}">${esc(t.dish.name)}</span><span class="tag ${t.s.kind==='active'?'a':''}">${t.s.kind==='active'?'Hands-on':'Hands-off'}</span><span class="tag">${fmtD(t.dur)}</span>
+      ${s.status==='running'?'<span class="tag a">In progress</span>':s.status==='done'?'<span class="tag">Done</span>':''}
+      <button class="tag" data-assign="${esc(k)}" style="cursor:pointer;border:0">${a?esc(a.name):'Unassigned · tap'}</button></div></div></li>`}).join('')+'</ol>'
+    +`<h3 class="sub">Event</h3><div class="card">`+(isHost?`<label>Cooks in the kitchen<input id="evChefs" type="number" min="1" max="10" value="${esc((evs.event.cfg&&evs.event.cfg.chefs)||1)}"></label>
+      <div class="row" style="margin-top:10px"><button class="sage" id="evChefsSave">Save cooks</button><button class="sage" id="evUpdate">Update plan from my menu</button></div>
+      <div class="row" style="margin-top:8px"><button class="x" id="evReset">Reset progress</button><button class="x" id="evEnd">End event</button></div>`
+      :`<div class="row"><button class="x" id="evLeave">Leave event</button></div>`)+`<div class="row"><button class="x" id="evBack">Back to all events</button></div></div>`}
+/* assignment sheet */
+let assignKeys=[];
+function openAssign(keys,title){assignKeys=keys;const m=meT(),me=evs.members.find(x=>x.id===m.memberId),host=me&&me.is_host;
+  $('#assignTitle').textContent=title;
+  const opts=host?evs.members.map(x=>[x.id,x.name+(x.id===m.memberId?' (me)':'')]):[[m.memberId,'Me']];opts.push([null,'Nobody']);
+  $('#assignList').innerHTML=opts.map(([id,n])=>`<button class="big" style="margin-top:8px" data-who="${id||''}">${esc(n)}</button>`).join('');$('#assignSheet').showModal()}
+/* events */
+document.addEventListener('click',async e=>{const t=e.target.closest('button');if(!t)return;
+  if(t.id==='hostGo'){const name=$('#hostName').value.trim();if(!name){toast('Please enter your name');return}setMyName(name);
+    try{t.disabled=true;const r=await rpc('create_event',{p_title:$('#hostTitle').value.trim()||'Dinner',p_serve_at:cfgPayload().serve,p_cfg:cfgPayload(),p_dishes:menuPayload(),p_name:name});
+      tm.events=tm.events.filter(x=>x.code!==r.code);tm.events.push({code:r.code,title:$('#hostTitle').value.trim()||'Dinner',memberId:r.member_id,memberToken:r.member_token,isHost:true,name});tm.current=r.code;saveTm();evs=null;subscribe(r.code);refreshEvent();renderTeam()}
+    catch(err){toast(err.message);t.disabled=false}return}
+  if(t.id==='joinGo'){const code=$('#joinCode').value.trim().toUpperCase(),name=$('#joinName').value.trim();if(code.length<6){toast('Enter the code from the host');return}if(!name){toast('Please enter your name');return}setMyName(name);
+    try{t.disabled=true;const r=await rpc('join_event',{p_code:code,p_name:name});tm.events=tm.events.filter(x=>x.code!==r.code);tm.events.push({code:r.code,title:'Dinner',memberId:r.member_id,memberToken:r.member_token,isHost:false,name});tm.current=r.code;saveTm();pendingJoin='';evs=null;subscribe(r.code);await refreshEvent();
+      if(evs){const x=tm.events.find(y=>y.code===r.code);x.title=evs.event.title;saveTm()}renderTeam()}
+    catch(err){toast(err.message);t.disabled=false}return}
+  if(t.dataset.openev){tm.current=t.dataset.openev;saveTm();evs=null;subscribe(tm.current);refreshEvent();renderTeam();return}
+  if(t.id==='evBack'){unsubscribe();tm.current=null;saveTm();evs=null;evErr='';renderTeam();return}
+  if(t.id==='evShare'){shareEvent();return}
+  if(t.id==='evCopy'){try{await navigator.clipboard.writeText(meT().code);toast('Code copied')}catch(err){toast('Code: '+meT().code)}return}
+  if(t.dataset.tk){const k=t.dataset.tk,st=t.dataset.st;localTask(k,{status:st,assignee:tState(k).assignee||meT().memberId});renderTeam();teamAct('set_status',{...A(),p_task_key:k,p_status:st});return}
+  if(t.dataset.assign){openAssign([t.dataset.assign],'Who is doing this step?');return}
+  if(t.dataset.adish){const d=edishes().find(x=>x.id===t.dataset.adish);if(d)openAssign(d.steps.map((s,i)=>d.id+':'+i),'Who is doing '+d.name+'?');return}
+  if(t.hasAttribute('data-who')&&t.closest('#assignList')){const who=t.dataset.who||null;$('#assignSheet').close();assignKeys.forEach(k=>localTask(k,{assignee:who}));renderTeam();teamAct('set_assignee',{...A(),p_task_keys:assignKeys,p_assignee:who});return}
+  if(t.id==='evChefsSave'){const c=Math.max(1,Math.min(10,+$('#evChefs').value||1));teamAct('update_plan',{...A(),p_title:evs.event.title,p_serve_at:evs.event.serve_at,p_cfg:Object.assign({},evs.event.cfg,{chefs:c}),p_dishes:evs.event.dishes},()=>toast('Saved'));return}
+  if(t.id==='evUpdate'){if(!menuPayload().length){toast('Your menu is empty');return}teamAct('update_plan',{...A(),p_title:evs.event.title,p_serve_at:cfgPayload().serve,p_cfg:cfgPayload(),p_dishes:menuPayload()},()=>toast('Shared plan updated'));return}
+  if(t.id==='evReset'){if(!t.dataset.armed){t.dataset.armed='1';t.textContent='Tap again to reset';setTimeout(()=>{if(t.isConnected){delete t.dataset.armed;t.textContent='Reset progress'}},3000);return}teamAct('reset_progress',A(),()=>{alerted.clear();toast('Progress reset')});return}
+  if(t.id==='evEnd'){if(!t.dataset.armed){t.dataset.armed='1';t.textContent='Tap again to end for everyone';setTimeout(()=>{if(t.isConnected){delete t.dataset.armed;t.textContent='End event'}},3000);return}
+    const m=meT();try{await rpc('delete_event',A());}catch(err){toast(err.message);return}unsubscribe();tm.events=tm.events.filter(x=>x.code!==m.code);tm.current=null;saveTm();evs=null;renderTeam();toast('Event ended');return}
+  if(t.id==='evLeave'){const m=meT();try{await rpc('leave_event',A())}catch(err){toast(err.message);return}unsubscribe();tm.events=tm.events.filter(x=>x.code!==m.code);tm.current=null;saveTm();evs=null;renderTeam();toast('You left the event')}});
+/* alert me when one of my steps is due */
+setInterval(()=>{const m=meT();if(!m||!evs||document.querySelector('dialog[open]'))return;let p;try{p=eplan()}catch(e){return}if(!p)return;
+  p.tasks.forEach(t=>{const k=tkey(t),s=tState(k);if(s.assignee===m.memberId&&s.status==='pending'&&t.start<=nowS()&&!alerted.has(k)){alerted.add(k);say(`Your turn. ${t.dish.name}. ${t.s.text}`,{beep:true});toast('Your turn: '+t.s.text.slice(0,60))}})},5000);
+if(teamOn&&meT()){subscribe(meT().code);refreshEvent()}
+
 imgLoadAll();
-window.__thyme={openPhoto,loadPhotoFile,cartoonize,illus,imgs:()=>imgs,imgPut,plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic,lib:()=>lib,addFromLib,findLib};
+window.__thyme={parseRecipe,renderTeam,teamState:()=>({tm,evs}),openPhoto,loadPhotoFile,cartoonize,illus,imgs:()=>imgs,imgPut,plan,tick,heard,run:()=>run,state:()=>state,localAnswer,heuristic,lib:()=>lib,addFromLib,findLib};
 show(location.hash.slice(1)||'menu');
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
