@@ -312,3 +312,6 @@ grant execute on function public.create_event(text, timestamptz, jsonb, jsonb, t
                           public.set_assignee(text, text, text[], uuid), public.set_status(text, text, text, text),
                           public.update_member(text, text, text), public.reset_progress(text, text),
                           public.leave_event(text, text), public.delete_event(text, text) to anon, authenticated;
+
+-- Make the API see the new functions right away.
+notify pgrst, 'reload schema';

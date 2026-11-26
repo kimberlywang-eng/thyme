@@ -679,10 +679,12 @@ $('#curate').addEventListener('click',()=>{const t=$('#pasteTxt').value.trim(),n
   openPrev(parseRecipe(t,name,serv),t)});
 
 /* ---------- scheduler: work backward from serve time ---------- */
+function ovenTemp(text){const m=/(\d{3})\s*(?:°|º|degrees?|deg)?\s*(f|c|fahrenheit|celsius)?\b/i.exec(String(text||'').replace(/(\d),(\d{3})/g,'$1$2'));if(!m)return null;let v=+m[1];const u=(m[2]||'').toLowerCase();if(/^c/.test(u))v=v*9/5+32;return v>=150&&v<=600?Math.round(v):null}
+const OVEN_TOL=25;
 function plan(src=state){
   const cfg=src.cfg,ds=src.dishes.filter(d=>d.steps.length),chefs=Math.max(1,Math.min(10,+cfg.chefs||1));
   const tasks=[];
-  ds.forEach(d=>{let before=0;d.steps.forEach((s,i)=>{const dur=Math.max(1,Math.round(s.kind==='active'?s.min*(1+(+cfg.buffer||0)/100):s.min));tasks.push({dish:d,d:d.id,i,s,dur,before});before+=dur})});
+  ds.forEach(d=>{let before=0;d.steps.forEach((s,i)=>{const dur=Math.max(1,Math.round(s.kind==='active'?s.min*(1+(+cfg.buffer||0)/100):s.min));tasks.push({dish:d,d:d.id,i,s,dur,before,temp:s.equip==='oven'?ovenTemp(s.text):null});before+=dur})});
   const cap={oven:Math.max(1,+cfg.ovens||1),burner:Math.max(1,+cfg.burners||1),none:1e9};
   const nxt={},ready={};ds.forEach(d=>{nxt[d.id]=d.steps.length-1;ready[d.id]=0});
   const placed=[];let R=0;
@@ -693,7 +695,15 @@ function plan(src=state){
     const cands=ds.filter(d=>nxt[d.id]>=0&&ready[d.id]<=R).map(d=>tasks.find(t=>t.d===d.id&&t.i===nxt[d.id]))
       .sort((a,b)=>(b.before+b.dur)-(a.before+a.dur)); // longest remaining chain goes first
     for(const t of cands){const eq=t.s.equip||'none';
-      if(t.s.kind==='active'&&nAct>=chefs)continue;if(used[eq]>=cap[eq])continue;
+      if(t.s.kind==='active'&&nAct>=chefs)continue;
+      if(eq==='oven'){ // one oven can hold several dishes if their temperatures are within a few degrees
+        const live2=placed.filter(x=>x.rs<=R&&R<x.re&&x.s.equip==='oven'),groups=[];
+        const same=(a,b)=>a===b||(a!=null&&b!=null&&Math.abs(a-b)<=OVEN_TOL);
+        live2.forEach(x=>{const g=groups.find(g=>same(g.t,x.temp));if(g)g.n++;else groups.push({t:x.temp,n:1})});
+        const g=groups.find(g=>same(g.t,t.temp));
+        if(groups.length>=cap.oven&&!g)continue;t.shared=!!g;
+        t.rs=R;t.re=R+t.dur;placed.push(t);if(t.s.kind==='active')nAct++;nxt[t.d]--;ready[t.d]=t.re;continue}
+      if(used[eq]>=cap[eq])continue;
       t.rs=R;t.re=R+t.dur;placed.push(t);if(t.s.kind==='active')nAct++;used[eq]++;nxt[t.d]--;ready[t.d]=t.re}
     R++;
   }
@@ -711,6 +721,7 @@ function renderPlan(){
   $('#planTop').innerHTML=`<div class="hero" style="cursor:default"><div class="k">Start cooking at</div><div class="big">${fmtT(p.start)}</div><div class="d">Dinner is served at ${fmtT(p.serve)}</div>
    <p style="margin-top:10px;font-weight:600">Everything is ready by ${fmtT(p.end)}, with ${esc(state.cfg.tail)} spare minutes.</p></div>
    <div class="stats"><div class="stat"><b>${fmtD(p.total)}</b><span>in the kitchen</span></div><div class="stat"><b>${fmtD(p.hands)}</b><span>hands-on</span></div><div class="stat"><b>${fmtD(Math.max(0,p.serial-p.total))}</b><span>saved by overlapping</span></div></div>
+   ${p.tasks.some(t=>t.shared)?`<div class="note" style="margin-top:12px">Oven tip: dishes within 25° of each other share one oven at the same time, so you save time. Set it to the lower temperature and check the higher dish a little early.</div>`:''}
    ${late?`<div class="note" style="margin-top:12px">That start time has passed. When you say "Okay Thyme, let's begin", Thyme shifts the plan to start right then and tells you the new finish time.</div>`:''}
    <button class="pri big" data-go2="cook" style="margin-top:14px">Start cooking</button>`;
   $('#planTop').querySelector('[data-go2]').addEventListener('click',()=>location.hash='cook');
@@ -1078,7 +1089,12 @@ function cartoonize(src,style){const w=src.width,h=src.height,k=w/480,ctx=src.ge
 let photoSrc=null,photoDish=null,photoStyle='cartoon',photoOut={};const STYLES=[['cartoon','Cartoon'],['story','Storybook'],['pastel','Pastel'],['orig','Original']];
 const tick10=()=>new Promise(r=>setTimeout(r,25));
 function openPhoto(did){photoDish=did;photoSrc=null;photoOut={};$('#photoPick').classList.remove('hide');$('#photoEdit').classList.add('hide');$('#photoBusy').textContent='';$('#photoSheet').showModal()}
-function loadPhotoFile(f){if(!f)return;if(!/^image\//.test(f.type)){toast('That does not look like a photo.');return}
+async function loadPhotoFile(f){if(!f)return;if(!/^image\//.test(f.type)&&f.type!==''){toast('That does not look like a photo.');return}
+  if(window.createImageBitmap){ // decode straight to a small size so big camera photos do not run the phone out of memory
+    try{const W=480,H=360,bm=await createImageBitmap(f,{resizeWidth:960,resizeQuality:'medium'}).catch(()=>createImageBitmap(f));
+      const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.imageSmoothingQuality='high';
+      const s=Math.max(W/bm.width,H/bm.height),dw=bm.width*s,dh=bm.height*s;x.drawImage(bm,(W-dw)/2,(H-dh)/2,dw,dh);if(bm.close)bm.close();
+      photoSrc=c;photoOut={orig:c};photoStyle='cartoon';$('#photoPick').classList.add('hide');$('#photoEdit').classList.remove('hide');await buildStyles();return}catch(e){}}
   const url=URL.createObjectURL(f),im=new Image();
   im.onload=async()=>{const W=480,H=360,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.imageSmoothingQuality='high';
     const s=Math.max(W/im.naturalWidth,H/im.naturalHeight),dw=im.naturalWidth*s,dh=im.naturalHeight*s;x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);URL.revokeObjectURL(url);
